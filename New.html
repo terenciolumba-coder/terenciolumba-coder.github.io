@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Carga</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #101820;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      color: #00c853;
+      margin-bottom: 30px;
+    }
+
+    .lamp-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .lamp {
+      background: #1e272e;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      width: 130px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    button {
+      background: #00c853;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #009624;
+    }
+
+    input {
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+      width: 250px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Controle de Carga</h1>
+  <input type="text" id="ip" placeholder="Digite o IP do Arduino (ex: 192.168.1.50)">
+  
+  <div class="lamp-container">
+    <div class="lamp">
+      <p>Lâmpada 1</p>
+      <button onclick="toggleLamp(1, true)">Ligar</button>
+      <button onclick="toggleLamp(1, false)">Desligar</button>
+    </div>
+    <div class="lamp">
+      <p>Lâmpada 2</p>
+      <button onclick="toggleLamp(2, true)">Ligar</button>
+      <button onclick="toggleLamp(2, false)">Desligar</button>
+    </div>
+    <div class="lamp">
+      <p>Lâmpada 3</p>
+      <button onclick="toggleLamp(3, true)">Ligar</button>
+      <button onclick="toggleLamp(3, false)">Desligar</button>
+    </div>
+    <div class="lamp">
+      <p>Lâmpada 4</p>
+      <button onclick="toggleLamp(4, true)">Ligar</button>
+      <button onclick="toggleLamp(4, false)">Desligar</button>
+    </div>
+  </div>
+
+  <script>
+    function toggleLamp(lamp, state) {
+      const ip = document.getElementById("ip").value.trim();
+      if (!ip) {
+        alert("Insira o IP do Arduino primeiro!");
+        return;
+      }
+
+      const action = state ? "on" : "off";
+      const url = `http://${ip}/${lamp}/${action}`;
+
+      fetch(url)
+        .then(res => {
+          if (res.ok) {
+            console.log(`Lâmpada ${lamp} ${state ? 'ligada' : 'desligada'}`);
+          } else {
+            alert("Erro ao comunicar com o Arduino!");
+          }
+        })
+        .catch(() => {
+          alert("Falha na conexão. Verifica o IP e a rede Wi-Fi.");
+        });
+    }
+  </script>
+</body>
+</html>
