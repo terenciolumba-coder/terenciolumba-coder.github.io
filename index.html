@@ -1,119 +1,644 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle de Carga</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #101820;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Controle de Cargas</title>
 
-    h1 {
-      color: #00c853;
-      margin-bottom: 30px;
-    }
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    .lamp-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
+<style>
+  /* ---------- Variables & reset ---------- */
+  :root{
+    --bg1: #0b1220;    /* deep blue-black */
+    --bg2: linear-gradient(135deg,#0e1630 0%, #091024 100%);
+    --card: rgba(255,255,255,0.04);
+    --glass: rgba(255,255,255,0.06);
+    --accent: #00e676;
+    --accent2: #00bcd4;
+    --warn: #ff6b6b;
+    --muted: #b8c0ce;
+    --radius: 14px;
+    --sidebar-w: 300px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+  html,body{height:100%}
+  body{
+    min-height:100vh;
+    background:var(--bg2);
+    color:#e9f0fb;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:48px;
+  }
 
-    .lamp {
-      background: #1e272e;
-      padding: 20px;
-      border-radius: 15px;
-      text-align: center;
-      width: 130px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
+  /* ---------- Topbar ---------- */
+  .topbar{
+    height:64px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 16px;
+    position:fixed;
+    top:0;left:0;right:0;
+    backdrop-filter: blur(8px);
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-bottom:1px solid rgba(255,255,255,0.03);
+    z-index:50;
+  }
+  .brand {display:flex;gap:12px;align-items:center;}
+  .logo{
+    width:40px;height:40px;border-radius:10px;
+    background:linear-gradient(135deg,var(--accent2),var(--accent));
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:#021016;
+    box-shadow:0 6px 18px rgba(0,180,200,0.12), inset 0 -6px 18px rgba(255,255,255,0.06);
+  }
+  .title {font-weight:700;font-size:18px;}
+  .top-actions{display:flex;gap:8px;align-items:center;}
 
-    button {
-      background: #00c853;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 10px;
-      width: 100%;
-      transition: 0.2s;
-    }
+  .menu-icon{
+    width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);
+  }
 
-    button:hover {
-      background: #009624;
-    }
+  /* ---------- Sidebar (hidden by default) ---------- */
+  .sidebar{
+    position:fixed;
+    top:74px;left:16px;
+    width:var(--sidebar-w);
+    background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+    border-radius:14px;
+    padding:14px;
+    box-shadow:0 20px 50px rgba(2,6,23,0.5);
+    transform: translateX(-120%);
+    transition: transform .28s cubic-bezier(.2,.9,.25,1), opacity .2s;
+    opacity:0; z-index:60;
+    border:1px solid rgba(255,255,255,0.04);
+  }
+  .sidebar.show { transform: translateX(0); opacity:1; }
+  .menu-section{margin-bottom:10px;}
+  .menu-section h4{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .menu-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;color:#eaf6ff;}
+  .menu-item:hover{background:linear-gradient(90deg, rgba(0,230,118,0.06), rgba(0,188,212,0.03));}
+  .menu-item .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 6px 16px rgba(0,230,118,0.08);}
 
-    input {
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      text-align: center;
-      width: 250px;
-    }
-  </style>
+  /* ---------- Layout main ---------- */
+  .container{
+    padding:90px 16px 40px;
+    max-width:1100px;margin:0 auto;
+  }
+
+  /* ---------- Status bar ---------- */
+  .status {
+    display:flex;align-items:center;gap:12px;margin-bottom:18px;
+    background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+    padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.02);
+  }
+  .status .dot {width:12px;height:12px;border-radius:50%;display:inline-block;}
+  .status .msg{font-weight:600;color:var(--muted);font-size:14px}
+
+  /* ---------- grid cards ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:18px;
+  }
+  .card{
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+    border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 12px 30px rgba(3,8,23,0.45);
+    transition: transform .22s ease, box-shadow .22s;
+    position:relative; overflow:hidden;
+  }
+  .card:hover{ transform: translateY(-6px); box-shadow:0 26px 60px rgba(3,8,23,0.6); }
+
+  .card .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .card h3{font-size:16px}
+  .badge{
+    padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px;
+    background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.03);
+  }
+  .badge.on{background:linear-gradient(90deg,var(--accent)30%, var(--accent2)); color:#021016; box-shadow:0 6px 18px rgba(0,230,118,0.08)}
+  .badge.off{background:rgba(255,255,255,0.03); color:var(--muted)}
+
+  .state {font-size:13px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .state .ind{width:12px;height:12px;border-radius:50%;display:inline-block;box-shadow:0 6px 16px rgba(0,0,0,0.5)}
+
+  /* ---------- toggle group ---------- */
+  .controls{display:flex;gap:10px}
+  .btn {flex:1;padding:10px;border-radius:12px;border:none;font-weight:700;cursor:pointer;transition:transform .12s;}
+  .btn:active{transform:scale(.98)}
+  .btn.on{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#021016}
+  .btn.off{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+
+  /* pulse/glow animation when toggled */
+  @keyframes pulse {
+    0%{ box-shadow:0 0 0 0 rgba(0,230,118,0.16) }
+    70%{ box-shadow:0 0 0 14px rgba(0,230,118,0.01) }
+    100%{ box-shadow:0 0 0 0 rgba(0,230,118,0) }
+  }
+  .pulse { animation: pulse 900ms ease-out; }
+
+  /* ---------- Logs & charts ---------- */
+  .panel { margin-top:18px; padding:14px; border-radius:12px; background:var(--glass); border:1px solid rgba(255,255,255,0.02);}
+  .log-item{ padding:10px;border-bottom:1px dashed rgba(255,255,255,0.02); font-size:13px; color:var(--muted); display:flex;justify-content:space-between; gap:10px;}
+  .log-item.new{ background: linear-gradient(90deg, rgba(0,230,118,0.03), rgba(0,188,212,0.01)); color:#eafffb; animation: fadeIn .7s;}
+  @keyframes fadeIn { from{opacity:0; transform: translateY(6px)} to{opacity:1; transform:none} }
+
+  /* ---------- settings form ---------- */
+  .form-row{display:flex;gap:8px; margin-top:10px}
+  input[type="text"], input[type="password"]{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#eaf6ff;flex:1}
+  .small {font-size:13px;color:var(--muted);margin-top:8px}
+
+  /* ---------- footer mobile hint ---------- */
+  .hint {position:fixed;left:50%;transform:translateX(-50%);bottom:12px;background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:999px;font-size:13px;border:1px solid rgba(255,255,255,0.02)}
+  /* responsive tweaks */
+  @media (max-width:640px){
+    .sidebar{left:8px; top:80px}
+    .container{padding:110px 12px 90px}
+  }
+</style>
 </head>
 <body>
-  <h1>Controle de Carga</h1>
-  <input type="text" id="ip" placeholder="Digite o IP do Arduino (ex: 192.168.1.50)">
-  
-  <div class="lamp-container">
-    <div class="lamp">
-      <p>Lâmpada 1</p>
-      <button onclick="toggleLamp(1, true)">Ligar</button>
-      <button onclick="toggleLamp(1, false)">Desligar</button>
-    </div>
-    <div class="lamp">
-      <p>Lâmpada 2</p>
-      <button onclick="toggleLamp(2, true)">Ligar</button>
-      <button onclick="toggleLamp(2, false)">Desligar</button>
-    </div>
-    <div class="lamp">
-      <p>Lâmpada 3</p>
-      <button onclick="toggleLamp(3, true)">Ligar</button>
-      <button onclick="toggleLamp(3, false)">Desligar</button>
-    </div>
-    <div class="lamp">
-      <p>Lâmpada 4</p>
-      <button onclick="toggleLamp(4, true)">Ligar</button>
-      <button onclick="toggleLamp(4, false)">Desligar</button>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">KZ</div>
+    <div>
+      <div class="title">Kubanza · Controle de Cargas</div>
+      <div style="font-size:12px;color:var(--muted)">Dashboard IoT — 4 cargas</div>
     </div>
   </div>
 
-  <script>
-    const SERVER_URL = "http://127.0.0.1:3000"; // back-end local
-    function toggleLamp(lamp, state) {
-      const ip = document.getElementById("ip").value.trim();
-      if (!ip) {
-        alert("Insira o IP do Arduino primeiro!");
-        return;
-      }
+  <div class="top-actions">
+    <div id="statusDisplay" class="status" style="padding:6px 10px;border-radius:10px">
+      <span class="dot" id="onlineDot" style="background:var(--warn)"></span>
+      <div class="msg" id="statusMsg">Verificando Arduino...</div>
+    </div>
 
-      const action = state ? "on" : "off";
-      const url = `http://${ip}/${lamp}/${action}`;
+    <div class="menu-icon" id="menuBtn" title="Menu" onclick="toggleMenu()">☰</div>
+  </div>
+</div>
 
-      fetch(url)
-        .then(res => {
-          if (res.ok) {
-            console.log(`Lâmpada ${lamp} ${state ? 'ligada' : 'desligada'}`);
-          } else {
-            alert("Erro ao comunicar com o Arduino!");
-          }
-        })
-        .catch(() => {
-          alert("Falha na conexão. Verifica o IP e a rede Wi-Fi.");
-        });
+<!-- SIDEBAR (hidden) -->
+<div class="sidebar" id="sidebar">
+  <div class="menu-section">
+    <h4>Principal</h4>
+    <div class="menu-item" onclick="showSection('dashboard')"><div class="dot"></div> Dashboard</div>
+    <div class="menu-item" onclick="showSection('logs')"><div class="dot" style="background:var(--accent2)"></div> Logs & Histórico</div>
+    <div class="menu-item" onclick="showSection('charts')"><div class="dot" style="background:var(--accent)"></div> Gráficos</div>
+  </div>
+
+  <div class="menu-section">
+    <h4>Projeto</h4>
+    <div class="menu-item" onclick="showSection('project')"><div class="dot" style="background:#8e70ff"></div> Sobre o projeto</div>
+    <div class="menu-item" onclick="showSection('innovation')"><div class="dot" style="background:#6ee7b7"></div> Inovações futuras</div>
+    <div class="menu-item" onclick="showSection('settings')"><div class="dot" style="background:#ffd166"></div> Configurações</div>
+  </div>
+
+  <div class="menu-section">
+    <h4>Conta</h4>
+    <div class="menu-item" onclick="logout()"><div class="dot" style="background:#ff6b6b"></div> Logout</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="container" id="app">
+
+  <!-- SECTION: Dashboard -->
+  <section id="dashboard" class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h2 style="margin:0">Dashboard</h2>
+      <div style="font-size:13px;color:var(--muted)">Espaço amplo, interativo e responsivo</div>
+    </div>
+
+    <div class="status" id="bigStatus">
+      <div class="dot" id="bigDot" style="background:var(--warn)"></div>
+      <div class="msg" id="bigMsg">Conectando ao Arduino...</div>
+      <div style="margin-left:auto;font-size:13px;color:var(--muted)">IP: <span id="ipShow">--</span></div>
+    </div>
+
+    <!-- CARDS GRID -->
+    <div class="grid" id="cardsGrid"></div>
+
+    <!-- quick panel -->
+    <div style="display:flex;gap:14px;margin-top:18px;flex-wrap:wrap">
+      <div class="panel" style="flex:1;min-width:260px">
+        <h4 style="margin-bottom:8px">Logs recentes</h4>
+        <div id="panelLogs" style="max-height:220px;overflow:auto"></div>
+      </div>
+
+      <div class="panel" style="flex:1.4;min-width:260px">
+        <h4 style="margin-bottom:8px">Resumo rápido</h4>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="flex:1">
+            <canvas id="miniChart" height="120"></canvas>
+          </div>
+          <div style="width:110px;text-align:center">
+            <div style="font-size:13px;color:var(--muted)">Total ações</div>
+            <div id="totalActions" style="font-weight:800;font-size:22px;margin-top:6px">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: Logs -->
+  <section id="logs" class="section" style="display:none;margin-top:10px">
+    <h2>Logs & Histórico</h2>
+    <div class="panel" style="margin-top:12px">
+      <div id="allLogs" style="max-height:420px;overflow:auto"></div>
+    </div>
+  </section>
+
+  <!-- SECTION: Charts -->
+  <section id="charts" class="section" style="display:none;margin-top:10px">
+    <h2>Gráficos de Uso</h2>
+    <div class="panel" style="margin-top:12px">
+      <canvas id="usageChart" height="160"></canvas>
+    </div>
+  </section>
+
+  <!-- SECTION: Project -->
+  <section id="project" class="section" style="display:none;margin-top:10px">
+    <h2>Sobre o Projeto</h2>
+    <div class="panel" style="margin-top:12px">
+      <p>Este dashboard controla 4 cargas via <strong>Arduino Uno + Ethernet Shield</strong>. O Arduino expõe endpoints HTTP simples que o front-end consome na LAN. Ideal para automação doméstica, testes de laboratório e demonstrações IoT.</p>
+      <p class="small">Endpoint padrão: <code>/relay/{n}/on</code> e <code>/relay/{n}/off</code>. Ajusta o IP nas Configurações.</p>
+    </div>
+  </section>
+
+  <!-- SECTION: Innovation -->
+  <section id="innovation" class="section" style="display:none;margin-top:10px">
+    <h2>Inovações Futuras</h2>
+    <div class="panel">
+      <ul>
+        <li>Leitura de consumo com sensor (ACS712) e visualização de potência em tempo real.</li>
+        <li>Autenticação forte: integração com serviço externo (OAuth) e enrolamento do SSL/HTTPS no futuro.</li>
+        <li>Comunicação MQTT para escalabilidade e histórico armazenado em servidor.</li>
+        <li>Aplicativo PWA nativo com notificações push sobre falhas/alertas.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SECTION: Settings -->
+  <section id="settings" class="section" style="display:none;margin-top:10px">
+    <h2>Configurações</h2>
+    <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label class="small">IP do Arduino (ex: 192.168.1.177)</label>
+        <div class="form-row">
+          <input id="ipInput" type="text" placeholder="IP do Arduino" />
+          <button class="btn on" onclick="saveIP()">Salvar</button>
+        </div>
+        <div class="small">O front-end chama o Arduino na tua rede local. Assumimos o endpoint padrão /relay/n/on e /relay/n/off</div>
+      </div>
+
+      <div>
+        <label class="small">Senha da aplicação</label>
+        <div class="form-row">
+          <input id="pwdNew" type="password" placeholder="Nova senha (opcional)" />
+          <input id="pwdSecret" type="text" placeholder="Pergunta/Resposta secreta (opcional)" />
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn on" onclick="createPassword()">Criar/Atualizar</button>
+          <button class="btn off" onclick="triggerRecovery()">Recuperar</button>
+        </div>
+        <div class="small">A senha é guardada localmente (hash). Sem back-end — não enviar nada para terceiros.</div>
+      </div>
+
+      <div>
+        <label class="small">Limpar logs</label>
+        <div style="margin-top:8px">
+          <button class="btn off" onclick="clearLogs()">Apagar logs</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="hint">Abre o menu com o ícone ☰ (topo direito)</div>
+
+<!-- LOGIN MODAL (simple) -->
+<div id="loginModal" style="position:fixed;inset:0;background:rgba(1,6,12,0.6);display:flex;align-items:center;justify-content:center;z-index:1000">
+  <div style="background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:12px;width:92%;max-width:420px;border:1px solid rgba(255,255,255,0.03);">
+    <h3 style="margin-bottom:8px">Entrar — Painel IoT</h3>
+    <div style="margin-bottom:8px;color:var(--muted)">Se não tens conta, cria uma senha com "Criar/Atualizar" nas Configurações.</div>
+    <input id="loginPwd" type="password" placeholder="Senha" style="width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#eaf6ff" />
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn on" onclick="login()">Entrar</button>
+      <button class="btn off" onclick="gotoCreate()">Criar / Recuperar</button>
+    </div>
+    <div id="loginMsg" style="color:#ff8b8b;margin-top:8px;height:18px"></div>
+  </div>
+</div>
+
+<script>
+/* ================= GLOBALS ================= */
+const LOADS = 4;
+let ipStored = localStorage.getItem('arduino_ip') || '';
+let baseUrl = ipStored ? `http://${ipStored}` : '';
+document.getElementById('ipShow').textContent = ipStored || '--';
+if(ipStored) document.getElementById('ipInput').value = ipStored;
+
+let logs = JSON.parse(localStorage.getItem('kz_logs') || '[]'); // array {msg, time, type, relay, action}
+let session = sessionStorage.getItem('kz_session') === '1';
+let savedHash = localStorage.getItem('kz_hash') || null;
+let savedSecret = localStorage.getItem('kz_secret') || null;
+
+/* ================ UI helpers ================ */
+function toggleMenu(){
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('show');
+}
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.style.display='none');
+  document.getElementById(id).style.display='block';
+  document.getElementById('sidebar').classList.remove('show');
+}
+
+/* ================ Password (SHA-256) ================ */
+async function sha256(text){
+  const enc = new TextEncoder();
+  const data = enc.encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  const arr = Array.from(new Uint8Array(hash));
+  return arr.map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function createPassword(){
+  const pwd = document.getElementById('pwdNew').value.trim();
+  const secret = document.getElementById('pwdSecret').value.trim();
+  if(!pwd || !secret){ alert('Senha e pergunta/resposta secreta são obrigatórios.'); return; }
+  const h = await sha256(pwd);
+  localStorage.setItem('kz_hash', h);
+  localStorage.setItem('kz_secret', secret);
+  savedHash = h; savedSecret = secret;
+  alert('Senha criada/atualizada.');
+}
+function gotoCreate(){ showSection('settings'); document.getElementById('loginMsg').textContent=''; }
+
+/* recovery */
+async function triggerRecovery(){
+  const ans = prompt('Digite a resposta secreta para recuperar a senha:');
+  if(!ans){ alert('Cancelado.'); return; }
+  if(ans === savedSecret){
+    const raw = prompt('Resposta correta — insira a nova senha:');
+    if(!raw) return;
+    const h = await sha256(raw);
+    localStorage.setItem('kz_hash', h);
+    alert('Senha redefinida. Faz login com a nova senha.');
+  } else alert('Resposta secreta incorreta.');
+}
+
+/* login */
+async function login(){
+  const p = document.getElementById('loginPwd').value.trim();
+  if(!savedHash){ document.getElementById('loginMsg').textContent = 'Nenhuma senha criada. Vai a Configurações.'; return; }
+  const h = await sha256(p);
+  if(h === savedHash){
+    sessionStorage.setItem('kz_session','1');
+    session = true;
+    document.getElementById('loginModal').style.display = 'none';
+    initApp();
+  } else {
+    document.getElementById('loginMsg').textContent = 'Senha incorreta.';
+  }
+}
+function logout(){
+  sessionStorage.removeItem('kz_session');
+  session=false;
+  document.getElementById('loginModal').style.display='flex';
+  showSection('dashboard');
+}
+
+/* ================ IP management ================ */
+function saveIP(){
+  const v = document.getElementById('ipInput').value.trim();
+  if(!v){ alert('Escreve um IP.'); return; }
+  localStorage.setItem('arduino_ip', v);
+  ipStored = v; baseUrl = `http://${v}`;
+  document.getElementById('ipShow').textContent = v;
+  alert('IP salvo. Lembra de reiniciar o Arduino se trocares para DHCP.');
+}
+
+/* ================= Logs handling ================= */
+function pushLog(obj){
+  logs.unshift(obj);
+  if(logs.length>200) logs.pop();
+  localStorage.setItem('kz_logs', JSON.stringify(logs));
+  renderPanelLogs();
+  renderAllLogs();
+  updateSummary();
+  animateNewLog();
+}
+function renderPanelLogs(){
+  const el = document.getElementById('panelLogs');
+  el.innerHTML = logs.slice(0,6).map(l=>`<div class="log-item ${l.new? 'new':''}"><div>${l.msg}</div><div>${l.time}</div></div>`).join('');
+}
+function renderAllLogs(){
+  const el = document.getElementById('allLogs');
+  el.innerHTML = logs.map(l=>`<div class="log-item"><div>${l.msg}</div><div style="color:var(--muted)">${l.time}</div></div>`).join('');
+}
+function clearLogs(){ if(confirm('Apagar todos os logs?')){ logs=[]; localStorage.removeItem('kz_logs'); renderPanelLogs(); renderAllLogs(); updateSummary(); } }
+function animateNewLog(){ const first = document.querySelector('#panelLogs .log-item'); if(first) first.classList.add('new'); setTimeout(()=>{ if(first) first.classList.remove('new'); },900); }
+
+/* ================= Cards (controls) ================= */
+function buildCards(){
+  const grid = document.getElementById('cardsGrid');
+  grid.innerHTML = '';
+  for(let i=1;i<=LOADS;i++){
+    const card = document.createElement('div'); card.className='card'; card.id=`card-${i}`;
+    card.innerHTML = `
+      <div class="head">
+        <h3>Lâmpada ${i}</h3>
+        <div class="badge off" id="badge-${i}">--</div>
+      </div>
+      <div class="state"><span class="ind" id="ind-${i}" style="background:#777"></span><div style="margin-left:8px;color:var(--muted);font-size:13px" id="stext-${i}">Estado: --</div></div>
+      <div class="controls">
+        <button class="btn on" onclick="toggleRelay(${i}, true)">Ligar</button>
+        <button class="btn off" onclick="toggleRelay(${i}, false)">Desligar</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+/* perform the fetch to the Arduino endpoints */
+function showFeedback(i, action, ok){
+  const badge = document.getElementById(`badge-${i}`);
+  const ind = document.getElementById(`ind-${i}`);
+  const stext = document.getElementById(`stext-${i}`);
+  if(ok){
+    if(action==='on'){ badge.classList.remove('off'); badge.classList.add('on'); badge.textContent='ON'; ind.style.background= 'linear-gradient(90deg,var(--accent),var(--accent2))'; stext.textContent = 'Estado: LIGADO'; }
+    else { badge.classList.remove('on'); badge.classList.add('off'); badge.textContent='OFF'; ind.style.background= '#ff6b6b'; stext.textContent = 'Estado: DESLIGADO'; }
+    // pulse effect
+    const card = document.getElementById(`card-${i}`);
+    card.classList.add('pulse');
+    setTimeout(()=> card.classList.remove('pulse'),900);
+  } else {
+    // offline error
+    const card = document.getElementById(`card-${i}`);
+    card.style.opacity = '0.6';
+    setTimeout(()=> card.style.opacity = '1',600);
+  }
+}
+
+/* toggle relay: calls Arduino */
+async function toggleRelay(n, turnOn){
+  if(!baseUrl){ alert('Define o IP do Arduino nas Configurações.'); return; }
+  const action = turnOn ? 'on' : 'off';
+  try {
+    const resp = await fetch(`${baseUrl}/relay/${n}/${action}`, {method:'GET', cache:'no-store', mode:'cors'});
+    // try parse json, but tolerate text
+    let ok = resp.ok;
+    showFeedback(n, action, ok);
+    const now = new Date().toLocaleString();
+    pushLog({msg:`Lâmpada ${n} → ${action.toUpperCase()}`, time: now, relay:n, action:action});
+  } catch(err){
+    updateOnline(false);
+    pushLog({msg:`Falha ao aceder Arduino (relay ${n} ${action})`, time: new Date().toLocaleString(), relay:n, action:action});
+    showFeedback(n, action, false);
+  }
+}
+
+/* ============= Online check ============= */
+let onlineState = false;
+async function checkOnline(){
+  if(!baseUrl){ updateOnline(false); return; }
+  try{
+    const r = await fetch(baseUrl+'/', {method:'GET', cache:'no-store', mode:'cors'});
+    if(r.ok){ updateOnline(true); } else updateOnline(false);
+  }catch(e){ updateOnline(false); }
+}
+function updateOnline(isOnline){
+  onlineState = isOnline;
+  const dot = document.getElementById('bigDot');
+  const bigMsg = document.getElementById('bigMsg');
+  const statusMsg = document.getElementById('statusMsg');
+  const onlineDot = document.getElementById('onlineDot');
+  if(isOnline){
+    dot.style.background = 'linear-gradient(90deg,var(--accent),var(--accent2))';
+    bigMsg.textContent = 'Arduino Online';
+    statusMsg.textContent = 'Conectado';
+    onlineDot.style.background = 'linear-gradient(90deg,var(--accent),var(--accent2))';
+  } else {
+    dot.style.background = 'linear-gradient(90deg,var(--warn),#ff8b6b)';
+    bigMsg.textContent = 'Arduino Offline';
+    statusMsg.textContent = 'Desconectado';
+    onlineDot.style.background = 'linear-gradient(90deg,var(--warn),#ff8b6b)';
+  }
+}
+
+/* ============= Charts ============= */
+let usageChart=null, miniChart=null;
+function renderCharts(){
+  const ctx = document.getElementById('usageChart').getContext('2d');
+  const ctx2 = document.getElementById('miniChart').getContext('2d');
+  const counts = getCounts();
+
+  if(usageChart) usageChart.destroy();
+  usageChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: Array.from({length:LOADS},(_,i)=>`Lâmpada ${i+1}`),
+      datasets:[{
+        label:'Ações ON',
+        data: counts,
+        backgroundColor: counts.map((c,i)=>`rgba(0,230,118,${0.35 + Math.min(0.65, c/10)})`),
+        borderRadius:8,
+      }]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
+  });
+
+  if(miniChart) miniChart.destroy();
+  miniChart = new Chart(ctx2, {
+    type:'doughnut',
+    data:{
+      labels: ['L1','L2','L3','L4'],
+      datasets:[{data:counts, backgroundColor:['#00e676','#00bcd4','#8e70ff','#ffd166']}]
+    },
+    options:{plugins:{legend:{display:false}}}
+  });
+
+  document.getElementById('totalActions').textContent = counts.reduce((a,b)=>a+b,0);
+}
+
+function getCounts(){
+  const counts = Array(LOADS).fill(0);
+  logs.forEach(item=>{
+    if(item.action === 'on'){
+      const idx = item.relay - 1;
+      if(idx>=0 && idx<LOADS) counts[idx]++;
     }
-  </script>
+  });
+  return counts;
+}
+
+/* ============== Init & rendering ============== */
+function renderAll(){
+  buildCards();
+  renderPanelLogs();
+  renderAllLogs();
+  renderCharts();
+  document.getElementById('ipShow').textContent = ipStored || '--';
+  updateOnline(false);
+}
+
+/* ============= Update summary ============= */
+function updateSummary(){ renderCharts(); renderPanelLogs(); renderAllLogs(); }
+
+/* ============= Animate UI small ============= */
+function smallPulse(el){ if(!el) return; el.style.transform='scale(1.03)'; setTimeout(()=>el.style.transform='none',220); }
+
+/* ============= Start app ============= */
+function initApp(){
+  if(!session){ document.getElementById('loginModal').style.display = 'flex'; return; }
+  document.getElementById('loginModal').style.display = 'none';
+  showSection('dashboard');
+  renderAll();
+  // periodic checks
+  checkOnline();
+  setInterval(checkOnline, 3000);
+  // refresh charts every few seconds (in case logs updated)
+  setInterval(()=>{ updateSummary(); }, 1500);
+}
+
+/* ============= Helpers for UI flow ============= */
+function gotoCreate(){ showSection('settings'); document.getElementById('loginModal').style.display='none'; }
+function triggerRecovery(){ showSection('settings'); alert('Use a opção "Recuperar" para redefinir senha com a resposta secreta.'); }
+
+/* ============= On load ============= */
+window.addEventListener('load', async ()=>{
+  // session check
+  session = sessionStorage.getItem('kz_session') === '1';
+  savedHash = localStorage.getItem('kz_hash');
+  savedSecret = localStorage.getItem('kz_secret');
+
+  // show login modal if no session
+  if(!session){
+    document.getElementById('loginModal').style.display = 'flex';
+  } else {
+    document.getElementById('loginModal').style.display = 'none';
+    initApp();
+  }
+
+  // initial render (cards only)
+  buildCards();
+  renderPanelLogs();
+  renderAllLogs();
+  renderCharts();
+
+  // set ip input if present
+  if(ipStored){ document.getElementById('ipInput').value = ipStored; baseUrl = `http://${ipStored}`; document.getElementById('ipShow').textContent = ipStored; }
+});
+
+/* keyboard shortcuts (developer) */
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='m'){ toggleMenu(); }
+});
+</script>
 </body>
-</html>
+  </html>
