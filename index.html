@@ -2,742 +2,722 @@
 <html lang="pt">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Controle de Cargas</title>
-
-<!-- Chart.js -->
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Painel IoT — Controle de Cargas</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <style>
-  /* ---------- Variables & reset ---------- */
-  :root{
-    --bg1: #0b1220;    /* deep blue-black */
-    --bg2: linear-gradient(135deg,#0e1630 0%, #091024 100%);
-    --card: rgba(255,255,255,0.04);
-    --glass: rgba(255,255,255,0.06);
-    --accent: #00e676;
-    --accent2: #00bcd4;
-    --warn: #ff6b6b;
-    --muted: #b8c0ce;
-    --radius: 14px;
-    --sidebar-w: 300px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
-  html,body{height:100%}
-  body{
-    min-height:100vh;
-    background:var(--bg2);
-    color:#e9f0fb;
-    -webkit-font-smoothing:antialiased;
-    padding-bottom:48px;
+  /* ======== DESIGN ENTERPRISE ======== */
+  :root {
+    --primary: #1976d2;
+    --primary-hover: #0e63b8;
+    --primary-light: #e3f2fd;
+
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --border: #e0e0e0;
+
+    --text: #1f1f1f;
+    --text-light: #5f6368;
+
+    --success: #2e7d32;
+    --danger: #c62828;
+
+    --radius: 12px;
+    --shadow: 0 4px 12px rgba(0,0,0,0.06);
   }
 
-  /* ---------- Topbar ---------- */
-  .topbar{
-    height:64px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 16px;
-    position:fixed;
-    top:0;left:0;right:0;
-    backdrop-filter: blur(8px);
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-bottom:1px solid rgba(255,255,255,0.03);
-    z-index:50;
-  }
-  .brand {display:flex;gap:12px;align-items:center;}
-  .logo{
-    width:40px;height:40px;border-radius:10px;
-    background:linear-gradient(135deg,var(--accent2),var(--accent));
-    display:flex;align-items:center;justify-content:center;font-weight:700;color:#021016;
-    box-shadow:0 6px 18px rgba(0,180,200,0.12), inset 0 -6px 18px rgba(255,255,255,0.06);
-  }
-  .title {font-weight:700;font-size:18px;}
-  .top-actions{display:flex;gap:8px;align-items:center;}
-
-  .menu-icon{
-    width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;
-    cursor:pointer;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Inter", sans-serif;
   }
 
-  /* ---------- Sidebar (hidden by default) ---------- */
-  .sidebar{
-    position:fixed;
-    top:74px;left:16px;
-    width:var(--sidebar-w);
-    background:linear-gradient(180deg, rgba(30,30,40,0.95), rgba(25,25,35,0.95));
-    border-radius:14px;
-    padding:14px;
-    box-shadow:0 20px 50px rgba(2,6,23,0.5);
-    transform: translateX(-120%);
-    transition: transform .28s cubic-bezier(.2,.9,.25,1), opacity .2s;
-    opacity:0; z-index:60;
-    border:1px solid rgba(255,255,255,0.04);
-  }
-  .sidebar.show { transform: translateX(0); opacity:1; }
-  .menu-section{margin-bottom:10px;}
-  .menu-section h4{font-size:12px;color:var(--muted);margin-bottom:8px}
-  .menu-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;color:#eaf6ff;}
-  .menu-item:hover{background:linear-gradient(90deg, rgba(0,230,118,0.06), rgba(0,188,212,0.03));}
-  .menu-item .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 6px 16px rgba(0,230,118,0.08);}
-
-  /* ---------- Layout main ---------- */
-  .container{
-    padding:90px 16px 40px;
-    max-width:1100px;margin:0 auto;
+  body {
+    background: var(--bg);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
   }
 
-  /* ---------- Status bar ---------- */
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    width: 250px;
+    background: #fff;
+    border-right: 1px solid var(--border);
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .sidebar h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .nav-item {
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--text-light);
+    font-size: 15px;
+    transition: 0.2s ease;
+  }
+
+  .nav-item:hover,
+  .nav-item.active {
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+
+  /* ===== CONTENT ===== */
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    background: #fff;
+    padding: 20px 30px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  /* ===== MAIN AREA ===== */
+  .main-content {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* ===== CARD PADRÃO ===== */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card-title {
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  /* ===== SWITCH ===== */
+  .switch {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .toggle {
+    width: 50px;
+    height: 26px;
+    background: #cfcfcf;
+    border-radius: 50px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.25s ease;
+  }
+
+  .toggle-circle {
+    width: 22px;
+    height: 22px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.25s ease;
+  }
+
+  .toggle.on {
+    background: var(--primary);
+  }
+
+  .toggle.on .toggle-circle {
+    transform: translateX(24px);
+  }
+
+  /* ===== STATUS ===== */
   .status {
-    display:flex;align-items:center;gap:12px;margin-bottom:18px;
-    background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
-    padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.02);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    width: fit-content;
   }
-  .status .dot {width:12px;height:12px;border-radius:50%;display:inline-block;}
-  .status .msg{font-weight:600;color:var(--muted);font-size:14px}
 
-  /* ---------- grid cards ---------- */
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-    gap:18px;
+  .status.on {
+    background: var(--primary-light);
+    color: var(--primary);
   }
-  .card{
-    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-    border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,0.03);
-    box-shadow: 0 12px 30px rgba(3,8,23,0.45);
-    transition: transform .22s ease, box-shadow .22s;
-    position:relative; overflow:hidden;
+
+  .status.off {
+    background: #ffebee;
+    color: var(--danger);
   }
-  .card:hover{ transform: translateY(-6px); box-shadow:0 26px 60px rgba(3,8,23,0.6); }
 
-  .card .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-  .card h3{font-size:16px}
-  .badge{
-    padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px;
-    background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.03);
+  /* ===== BUTTONS ===== */
+  .btn {
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
   }
-  .badge.on{background:linear-gradient(90deg,var(--accent)30%, var(--accent2)); color:#021016; box-shadow:0 6px 18px rgba(0,230,118,0.08)}
-  .badge.off{background:rgba(255,255,255,0.03); color:var(--muted)}
 
-  .state {font-size:13px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-  .state .ind{width:12px;height:12px;border-radius:50%;display:inline-block;box-shadow:0 6px 16px rgba(0,0,0,0.5)}
-
-  /* ---------- toggle group ---------- */
-  .controls{display:flex;gap:10px}
-  .btn {flex:1;padding:10px;border-radius:12px;border:none;font-weight:700;cursor:pointer;transition:transform .12s;}
-  .btn:active{transform:scale(.98)}
-  .btn.on{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#021016}
-  .btn.off{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
-
-  /* pulse/glow animation when toggled */
-  @keyframes pulse {
-    0%{ box-shadow:0 0 0 0 rgba(0,230,118,0.16) }
-    70%{ box-shadow:0 0 0 14px rgba(0,230,118,0.01) }
-    100%{ box-shadow:0 0 0 0 rgba(0,230,118,0) }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
   }
-  .pulse { animation: pulse 900ms ease-out; }
 
-  /* ---------- Logs & charts ---------- */
-  .panel { margin-top:18px; padding:14px; border-radius:12px; background:var(--glass); border:1px solid rgba(255,255,255,0.02);}
-  .log-item{ padding:10px;border-bottom:1px dashed rgba(255,255,255,0.02); font-size:13px; color:var(--muted); display:flex;justify-content:space-between; gap:10px;}
-  .log-item.new{ background: linear-gradient(90deg, rgba(0,230,118,0.03), rgba(0,188,212,0.01)); color:#eafffb; animation: fadeIn .7s;}
-  @keyframes fadeIn { from{opacity:0; transform: translateY(6px)} to{opacity:1; transform:none} }
+  .btn-primary:hover {
+    background: var(--primary-hover);
+  }
 
-  /* ---------- settings form ---------- */
-  .form-row{display:flex;gap:8px; margin-top:10px}
-  input[type="text"], input[type="password"]{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#eaf6ff;flex:1}
-  .small {font-size:13px;color:var(--muted);margin-top:8px}
+  .btn-on {
+    background: var(--success);
+    color: #fff;
+  }
 
-  /* ---------- footer mobile hint ---------- */
-  .hint {position:fixed;left:50%;transform:translateX(-50%);bottom:12px;background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:999px;font-size:13px;border:1px solid rgba(255,255,255,0.02)}
-  /* responsive tweaks */
-  @media (max-width:640px){
-    .sidebar{left:8px; top:80px}
-    .container{padding:110px 12px 90px}
+  .btn-on:hover {
+    background: #1b5e20;
+  }
+
+  .btn-off {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  .btn-off:hover {
+    background: #b71c1c;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* ===== GRID ===== */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 24px;
+  }
+
+  /* ===== CONFIG SECTION ===== */
+  .config-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 24px;
+    border-radius: var(--radius);
+    max-width: 420px;
+    box-shadow: var(--shadow);
+  }
+
+  .config-section h3 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .config-section input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 15px;
+  }
+
+  /* ===== CHART ===== */
+  .chart-container {
+    background: var(--card);
+    padding: 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    height: 320px;
+    box-shadow: var(--shadow);
+  }
+
+  .chart-container h3 {
+    margin-bottom: 16px;
+    font-size: 18px;
+  }
+
+  /* ===== INFO SECTION ===== */
+  .info-section {
+    background: var(--card);
+    padding: 34px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    line-height: 1.65;
+  }
+
+  .info-section h2 {
+    color: var(--primary);
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+
+  .info-section h3 {
+    color: var(--text);
+    margin: 25px 0 15px 0;
+    font-size: 18px;
+  }
+
+  .info-section p {
+    margin-bottom: 15px;
+    color: var(--text-light);
+  }
+
+  .info-section ul {
+    margin-left: 20px;
+    margin-bottom: 20px;
+  }
+
+  .info-section li {
+    margin-bottom: 8px;
+    color: var(--text-light);
+  }
+
+  .developers {
+    background: var(--primary-light);
+    padding: 20px;
+    border-radius: var(--radius);
+    border-left: 4px solid var(--primary);
+    margin-top: 25px;
+  }
+
+  .developers h4 {
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  /* RESPONSIVO */
+  @media (max-width: 768px) {
+    body {
+      flex-direction: column;
+    }
+    
+    .sidebar {
+      width: 100%;
+      flex-direction: row;
+      overflow-x: auto;
+      padding: 16px;
+    }
+    
+    .sidebar h2 {
+      display: none;
+    }
+    
+    .nav-item {
+      white-space: nowrap;
+    }
+    
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .config-section {
+      max-width: 100%;
+    }
+    
+    .main-content {
+      padding: 20px;
+    }
   }
 </style>
 </head>
 <body>
-
-<!-- TOPBAR -->
-<div class="topbar">
-  <div class="brand">
-    <div class="logo">KZ</div>
-    <div>
-      <div class="title">Kubanza · Controle de Cargas</div>
-      <div style="font-size:12px;color:var(--muted)">Dashboard IoT — 4 cargas</div>
-    </div>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>Painel IoT</h2>
+    <div class="nav-item active" onclick="showSection('dashboard')">Dashboard</div>
+    <div class="nav-item" onclick="showSection('cargas')">Cargas</div>
+    <div class="nav-item" onclick="showSection('graficos')">Gráficos</div>
+    <div class="nav-item" onclick="showSection('logs')">Logs</div>
+    <div class="nav-item" onclick="showSection('informacoes')">Informações</div>
+    <div class="nav-item" onclick="showSection('configuracoes')">Configurações</div>
   </div>
 
-  <div class="top-actions">
-    <div id="statusDisplay" class="status" style="padding:6px 10px;border-radius:10px">
-      <span class="dot" id="onlineDot" style="background:var(--warn)"></span>
-      <div class="msg" id="statusMsg">Verificando Arduino...</div>
-    </div>
+  <!-- MAIN AREA -->
+  <div class="content">
+    <header>
+      <h1>Controle Inteligente de Cargas</h1>
+    </header>
 
-    <div class="menu-icon" id="menuBtn" title="Menu" onclick="toggleMenu()">☰</div>
-  </div>
-</div>
-
-<!-- SIDEBAR (hidden) -->
-<div class="sidebar" id="sidebar">
-  <div class="menu-section">
-    <h4>Principal</h4>
-    <div class="menu-item" onclick="showSection('dashboard')"><div class="dot"></div> Dashboard</div>
-    <div class="menu-item" onclick="showSection('logs')"><div class="dot" style="background:var(--accent2)"></div> Logs & Histórico</div>
-    <div class="menu-item" onclick="showSection('charts')"><div class="dot" style="background:var(--accent)"></div> Gráficos</div>
-  </div>
-
-  <div class="menu-section">
-    <h4>Projeto</h4>
-    <div class="menu-item" onclick="showSection('project')"><div class="dot" style="background:#8e70ff"></div> Sobre o projeto</div>
-    <div class="menu-item" onclick="showSection('innovation')"><div class="dot" style="background:#6ee7b7"></div> Inovações futuras</div>
-    <div class="menu-item" onclick="showSection('settings')"><div class="dot" style="background:#ffd166"></div> Configurações</div>
-  </div>
-
-  <div class="menu-section">
-    <h4>Conta</h4>
-    <div class="menu-item" onclick="logout()"><div class="dot" style="background:#ff6b6b"></div> Logout</div>
-  </div>
-</div>
-
-<!-- MAIN -->
-<div class="container" id="app">
-
-  <!-- SECTION: Dashboard -->
-  <section id="dashboard" class="section">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h2 style="margin:0">Dashboard</h2>
-      <div style="font-size:13px;color:var(--muted)">Espaço amplo, interativo e responsivo</div>
-    </div>
-
-    <div class="status" id="bigStatus">
-      <div class="dot" id="bigDot" style="background:var(--warn)"></div>
-      <div class="msg" id="bigMsg">Conectando ao Arduino...</div>
-      <div style="margin-left:auto;font-size:13px;color:var(--muted)">IP: <span id="ipShow">--</span></div>
-    </div>
-
-    <!-- CARDS GRID -->
-    <div class="grid" id="cardsGrid"></div>
-
-    <!-- quick panel -->
-    <div style="display:flex;gap:14px;margin-top:18px;flex-wrap:wrap">
-      <div class="panel" style="flex:1;min-width:260px">
-        <h4 style="margin-bottom:8px">Logs recentes</h4>
-        <div id="panelLogs" style="max-height:220px;overflow:auto"></div>
-      </div>
-
-      <div class="panel" style="flex:1.4;min-width:260px">
-        <h4 style="margin-bottom:8px">Resumo rápido</h4>
-        <div style="display:flex;gap:12px;align-items:center">
-          <div style="flex:1">
-            <canvas id="miniChart" height="120"></canvas>
-          </div>
-          <div style="width:110px;text-align:center">
-            <div style="font-size:13px;color:var(--muted)">Total ações</div>
-            <div id="totalActions" style="font-weight:800;font-size:22px;margin-top:6px">0</div>
+    <div class="main-content">
+      <!-- SEÇÃO DASHBOARD -->
+      <div id="dashboard" class="section active">
+        <!-- Configuração IP -->
+        <div class="config-section">
+          <h3>Configurar IP do Arduino</h3>
+          <div class="input-group">
+            <input id="arduinoIP" type="text" placeholder="Ex: 192.168.1.77" />
+            <button class="btn btn-primary" onclick="salvarIP()">Guardar IP</button>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- SECTION: Logs -->
-  <section id="logs" class="section" style="display:none;margin-top:10px">
-    <h2>Logs & Histórico</h2>
-    <div class="panel" style="margin-top:12px">
-      <div id="allLogs" style="max-height:420px;overflow:auto"></div>
-    </div>
-  </section>
+        <!-- Grid de Cargas -->
+        <div class="grid">
+          <!-- CARD 1 -->
+          <div class="card">
+            <div class="card-title">Lâmpada 1</div>
+            <span class="status off">OFF</span>
+            <div class="switch">
+              <small>Estado</small>
+              <div class="toggle" onclick="toggleSwitch(this, 1)">
+                <div class="toggle-circle"></div>
+              </div>
+            </div>
+            <div class="controls">
+              <button class="btn btn-on" onclick="controlarLampada(1, true)">Ligar</button>
+              <button class="btn btn-off" onclick="controlarLampada(1, false)">Desligar</button>
+            </div>
+          </div>
 
-  <!-- SECTION: Charts -->
-  <section id="charts" class="section" style="display:none;margin-top:10px">
-    <h2>Gráficos de Uso</h2>
-    <div class="panel" style="margin-top:12px">
-      <canvas id="usageChart" height="160"></canvas>
-    </div>
-  </section>
+          <!-- CARD 2 -->
+          <div class="card">
+            <div class="card-title">Lâmpada 2</div>
+            <span class="status off">OFF</span>
+            <div class="switch">
+              <small>Estado</small>
+              <div class="toggle" onclick="toggleSwitch(this, 2)">
+                <div class="toggle-circle"></div>
+              </div>
+            </div>
+            <div class="controls">
+              <button class="btn btn-on" onclick="controlarLampada(2, true)">Ligar</button>
+              <button class="btn btn-off" onclick="controlarLampada(2, false)">Desligar</button>
+            </div>
+          </div>
 
-  <!-- SECTION: Project -->
-  <section id="project" class="section" style="display:none;margin-top:10px">
-    <h2>Sobre o Projeto</h2>
-    <div class="panel" style="margin-top:12px">
-      <p> <strong>🌟 Sistema de Controle de Cargas IoT com Arduino e Ethernet Shield</strong>strong>– Resumo Estruturado e Envolvente
+          <!-- CARD 3 -->
+          <div class="card">
+            <div class="card-title">Lâmpada 3</div>
+            <span class="status off">OFF</span>
+            <div class="switch">
+              <small>Estado</small>
+              <div class="toggle" onclick="toggleSwitch(this, 3)">
+                <div class="toggle-circle"></div>
+              </div>
+            </div>
+            <div class="controls">
+              <button class="btn btn-on" onclick="controlarLampada(3, true)">Ligar</button>
+              <button class="btn btn-off" onclick="controlarLampada(3, false)">Desligar</button>
+            </div>
+          </div>
 
-Este projeto é uma solução prática e acessível de automação de iluminação, capaz de controlar até 4 lâmpadas de 220V a partir de um aplicativo mobile ou navegador. Tudo funciona sobre uma arquitetura simples, estável e totalmente personalizável.
-
-⚙️ Como o Sistema Funciona
-
-O usuário toca no botão da interface → o aplicativo envia um comando HTTP → o Arduino recebe, interpreta e aciona o relé → a lâmpada liga ou desliga.
-Simples, rápido e com retorno visual imediato.
-
-🧩 Tecnologias e Componentes
-
-Arduino Uno + Ethernet Shield W5100: execução e comunicação por cabo, garantindo estabilidade.
-
-Módulo Relé 4 Canais: interface segura entre baixa tensão (5V) e alta tensão (220V).
-
-HTML, CSS e JavaScript: interface responsiva, pensada primeiro para telemóveis.
-
-Protocolo HTTP: comunicação leve e universal.
-
-
-💡 Aplicações Reais
-
-Casas: desligar luzes esquecidas, controlar áreas externas, simular presença.
-
-Negócios: gerir iluminação de vários ambientes de forma centralizada.
-
-Segurança e economia: menos desperdício, mais controle.
-
-
-🔒 Segurança e Confiabilidade
-
-Isolamento galvânico dos relés
-
-Circuitos independentes
-
-IP fixo
-
-Interface atualizada em tempo real
-</p>
-      <p class="small">Endpoint padrão: <code>/relay/{n}/on</code> e <code>/relay/{n}/off</code>. Ajusta o IP nas Configurações.</p>
-    </div>
-  </section>
-
-  <!-- SECTION: Innovation -->
-  <section id="innovation" class="section" style="display:none;margin-top:10px">
-    <h2>Inovações Futuras</h2>
-    <div class="panel">
-      <ul>
-        <li>🚀 Projeto IoT – A Plataforma que Transforma Espaços em Ambientes Inteligentes
-
-Este projeto não é apenas sobre ligar lâmpadas. É sobre criar uma plataforma de automação verdadeiramente inteligente, acessível e expansível, capaz de impactar casas, empresas e até setores que hoje nem imaginam o que a IoT pode fazer por eles.
-
-💡 O Coração da Inovação
-
-A ideia central é simples: tornar qualquer espaço capaz de aprender, adaptar-se e responder às pessoas, tudo de forma natural e eficiente.
-Com sensores, IA e automação conectada, o sistema deixa de ser só um “controlo de cargas” e transforma-se numa infraestrutura viva, que evolui com o tempo.
-
-🔥 Tecnologias que Elevam o Conceito
-
-IA preditiva que entende padrões e otimiza energia automaticamente.
-
-Nuvem híbrida que combina operação local e analytics avançados.
-
-Integração universal via API para funcionar com qualquer sistema.
-
-Modelos de negócio flexíveis, desde uso residencial até serviços para empresas.
-
-
-🌍 Setores com Potencial Imenso
-
-A grande força da plataforma está na sua capacidade de penetrar áreas onde a automação tradicional nunca chegou:
-
-Saúde – quartos que se ajustam a pacientes, iluminação terapêutica, sinalização para emergências.
-Agricultura – estufas inteligentes, ciclos automáticos de luz para hidroponia.
-Arte & Entretenimento – cenários dinâmicos, galerias com luz adaptada às obras.
-Educação – salas que se ajustam ao tipo de aula e laboratórios makers automatizados.
-
-🔄 Novas Aplicações que Mudam o Jogo
-
-O sistema pode evoluir para coisas maiores:
-semáforos inteligentes, iluminação pública adaptativa, experiências imersivas em museus, sistemas off-grid para comunidades, agricultura urbana e até ambientes que respondem a emoções humanas.
-
-🌟 Tecnologias Disruptivas em Direção ao Futuro
-
-Interface cérebro-máquina para acessibilidade real.
-
-Rede mesh descentralizada, funcionando mesmo sem internet.
-
-Realidade aumentada para manutenção, operação e treinamento.
-
-
-🎯 O Diferencial que Nos Coloca à Frente
-
-É aberto, não preso a sistemas proprietários.
-
-É económico, muito mais barato que automação corporativa.
-
-É inclusivo, formando técnicos locais e democratizando tecnologia.
-
-É escalável, desde uma lâmpada até redes inteiras de dispositivos.
-
-
-🌌 A Visão Final
-
-O objetivo vai além da automação.
-Queremos criar uma nova forma de interação entre seres humanos e espaços inteligentes — uma espécie de “Android da automação física”.
-Uma plataforma onde qualquer pessoa, em qualquer lugar, pode construir soluções que transformam ambientes comuns em ecossistemas vivos e adaptativos.
-
-Da luz que acendes hoje ao futuro onde ambientes inteiros se tornam inteligentes — este é o caminho. 🌟</li>
-        <li>Leitura de consumo com sensor (ACS712) e visualização de potência em tempo real.</li>
-        <li>Autenticação forte: integração com serviço externo (OAuth) e enrolamento do SSL/HTTPS no futuro.</li>
-        <li>Comunicação MQTT para escalabilidade e histórico armazenado em servidor.</li>
-        <li>Aplicativo PWA nativo com notificações push sobre falhas/alertas.</li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- SECTION: Settings -->
-  <section id="settings" class="section" style="display:none;margin-top:10px">
-    <h2>Configurações</h2>
-    <div class="panel" style="display:flex;flex-direction:column;gap:12px">
-      <div>
-        <label class="small">IP do Arduino (ex: 192.168.1.177)</label>
-        <div class="form-row">
-          <input id="ipInput" type="text" placeholder="IP do Arduino" />
-          <button class="btn on" onclick="saveIP()">Salvar</button>
+          <!-- CARD 4 -->
+          <div class="card">
+            <div class="card-title">Lâmpada 4</div>
+            <span class="status off">OFF</span>
+            <div class="switch">
+              <small>Estado</small>
+              <div class="toggle" onclick="toggleSwitch(this, 4)">
+                <div class="toggle-circle"></div>
+              </div>
+            </div>
+            <div class="controls">
+              <button class="btn btn-on" onclick="controlarLampada(4, true)">Ligar</button>
+              <button class="btn btn-off" onclick="controlarLampada(4, false)">Desligar</button>
+            </div>
+          </div>
         </div>
-        <div class="small">O front-end chama o Arduino na tua rede local. Assumimos o endpoint padrão /relay/n/on e /relay/n/off</div>
-      </div>
 
-      <div>
-        <label class="small">Senha da aplicação</label>
-        <div class="form-row">
-          <input id="pwdNew" type="password" placeholder="Nova senha (opcional)" />
-          <input id="pwdSecret" type="text" placeholder="Pergunta/Resposta secreta (opcional)" />
-        </div>
-        <div style="margin-top:8px;display:flex;gap:8px">
-          <button class="btn on" onclick="createPassword()">Criar/Atualizar</button>
-          <button class="btn off" onclick="triggerRecovery()">Recuperar</button>
-        </div>
-        <div class="small">A senha é guardada localmente (hash). Sem back-end — não enviar nada para terceiros.</div>
-      </div>
-
-      <div>
-        <label class="small">Limpar logs</label>
-        <div style="margin-top:8px">
-          <button class="btn off" onclick="clearLogs()">Apagar logs</button>
+        <!-- Gráfico -->
+        <div class="chart-container">
+          <h3>Consumo de Energia</h3>
+          <canvas id="chart"></canvas>
         </div>
       </div>
+
+      <!-- OUTRAS SEÇÕES (inicialmente ocultas) -->
+      <div id="cargas" class="section" style="display: none;">
+        <h2>Gestão de Cargas</h2>
+        <p>Interface para gestão detalhada das cargas...</p>
+      </div>
+
+      <div id="graficos" class="section" style="display: none;">
+        <h2>Gráficos Detalhados</h2>
+        <p>Visualizações avançadas de consumo...</p>
+      </div>
+
+      <div id="logs" class="section" style="display: none;">
+        <h2>Logs do Sistema</h2>
+        <p>Histórico de atividades e eventos...</p>
+      </div>
+
+      <!-- SEÇÃO INFORMAÇÕES -->
+      <div id="informacoes" class="section" style="display: none;">
+        <div class="info-section">
+          <h2>Sobre o Projeto</h2>
+          
+          <h3>O que é este sistema?</h3>
+          <p>Este é um sistema completo de controle de cargas IoT desenvolvido para automatizar e gerenciar remotamente até 4 lâmpadas ou dispositivos elétricos de 220V através de uma interface web moderna e intuitiva.</p>
+
+          <h3>Como funciona?</h3>
+          <p>O sistema utiliza uma arquitetura cliente-servidor onde:</p>
+          <ul>
+            <li><strong>Interface Web:</strong> Permite controlar os dispositivos através de qualquer navegador ou dispositivo móvel</li>
+            <li><strong>Arduino com Ethernet:</strong> Atua como servidor local recebendo comandos via HTTP</li>
+            <li><strong>Módulo de Relés:</strong> Interface segura entre o Arduino (5V) e as cargas elétricas (220V)</li>
+            <li><strong>Protocolo HTTP:</strong> Comunicação simples e eficiente na rede local</li>
+          </ul>
+
+          <h3>Para que serve?</h3>
+          <p>Este sistema é ideal para:</p>
+          <ul>
+            <li><strong>Automação Residencial:</strong> Controlar iluminação de forma remota</li>
+            <li><strong>Eficiência Energética:</strong> Gerenciar consumo elétrico inteligentemente</li>
+            <li><strong>Segurança:</strong> Simular presença através de acionamento programado</li>
+            <li><strong>Controle Empresarial:</strong> Gerenciar iluminação de escritórios e espaços comerciais</li>
+            <li><strong>Educação:</strong> Aprender sobre IoT, eletrônica e programação</li>
+          </ul>
+
+          <h3>Como usar?</h3>
+          <p><strong>Configuração Inicial:</strong></p>
+          <ul>
+            <li>Conecte o Arduino à rede Ethernet</li>
+            <li>Configure o IP do Arduino na seção "Dashboard"</li>
+            <li>Conecte as lâmpadas aos relés conforme o diagrama elétrico</li>
+          </ul>
+
+          <p><strong>Uso Diário:</strong></p>
+          <ul>
+            <li>Acesse a interface através de qualquer dispositivo na mesma rede</li>
+            <li>Use os botões "Ligar/Desligar" ou os switches para controlar cada carga</li>
+            <li>Monitore o consumo através dos gráficos</li>
+            <li>Consulte o histórico de operações nos logs</li>
+          </ul>
+
+          <h3>Características Técnicas</h3>
+          <ul>
+            <li>Controle de até 4 cargas independentes</li>
+            <li>Interface web responsiva (funciona em mobile e desktop)</li>
+            <li>Comunicação via protocolo HTTP</li>
+            <li>Armazenamento local de configurações</li>
+            <li>Visualização de dados em tempo real</li>
+            <li>Design moderno e intuitivo</li>
+          </ul>
+
+          <div class="developers">
+            <h4>Desenvolvido por:</h4>
+            <p><strong>Jalussiel e Jomarcio</strong></p>
+            <p>Este projeto representa uma solução prática e acessível para automação residencial e controle inteligente de energia, combinando eletrônica, programação e design de interfaces para criar um sistema completo de IoT.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="configuracoes" class="section" style="display: none;">
+        <h2>Configurações Avançadas</h2>
+        <p>Opções avançadas de configuração...</p>
+      </div>
     </div>
-  </section>
-
-</div>
-
-<div class="hint">Abre o menu com o ícone ☰ (topo direito)</div>
-
-<!-- LOGIN MODAL (simple) -->
-<div id="loginModal" style="position:fixed;inset:0;background:rgba(1,6,12,0.6);display:flex;align-items:center;justify-content:center;z-index:1000">
-  <div style="background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:12px;width:92%;max-width:420px;border:1px solid rgba(255,255,255,0.03);">
-    <h3 style="margin-bottom:8px">Entrar — Painel IoT</h3>
-    <div style="margin-bottom:8px;color:var(--muted)">Se não tens conta, cria uma senha com "Criar/Atualizar" nas Configurações.</div>
-    <input id="loginPwd" type="password" placeholder="Senha" style="width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#eaf6ff" />
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn on" onclick="login()">Entrar</button>
-      <button class="btn off" onclick="gotoCreate()">Criar / Recuperar</button>
-    </div>
-    <div id="loginMsg" style="color:#ff8b8b;margin-top:8px;height:18px"></div>
   </div>
-</div>
 
-<script>
-/* ================= GLOBALS ================= */
-const LOADS = 4;
-let ipStored = localStorage.getItem('arduino_ip') || '';
-let baseUrl = ipStored ? `http://${ipStored}` : '';
-document.getElementById('ipShow').textContent = ipStored || '--';
-if(ipStored) document.getElementById('ipInput').value = ipStored;
+  <script>
+    // ===== VARIÁVEIS GLOBAIS =====
+    let arduinoIP = localStorage.getItem('arduino_ip') || '';
+    let lampadasEstado = [false, false, false, false]; // Estados das 4 lâmpadas
 
-let logs = JSON.parse(localStorage.getItem('kz_logs') || '[]'); // array {msg, time, type, relay, action}
-let session = sessionStorage.getItem('kz_session') === '1';
-let savedHash = localStorage.getItem('kz_hash') || null;
-let savedSecret = localStorage.getItem('kz_secret') || null;
-
-/* ================ UI helpers ================ */
-function toggleMenu(){
-  const sb = document.getElementById('sidebar');
-  sb.classList.toggle('show');
-}
-function showSection(id){
-  document.querySelectorAll('.section').forEach(s=>s.style.display='none');
-  document.getElementById(id).style.display='block';
-  document.getElementById('sidebar').classList.remove('show');
-}
-
-/* ================ Password (SHA-256) ================ */
-async function sha256(text){
-  const enc = new TextEncoder();
-  const data = enc.encode(text);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  const arr = Array.from(new Uint8Array(hash));
-  return arr.map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-async function createPassword(){
-  const pwd = document.getElementById('pwdNew').value.trim();
-  const secret = document.getElementById('pwdSecret').value.trim();
-  if(!pwd || !secret){ alert('Senha e pergunta/resposta secreta são obrigatórios.'); return; }
-  const h = await sha256(pwd);
-  localStorage.setItem('kz_hash', h);
-  localStorage.setItem('kz_secret', secret);
-  savedHash = h; savedSecret = secret;
-  alert('Senha criada/atualizada.');
-}
-function gotoCreate(){ showSection('settings'); document.getElementById('loginMsg').textContent=''; }
-
-/* recovery */
-async function triggerRecovery(){
-  const ans = prompt('Digite a resposta secreta para recuperar a senha:');
-  if(!ans){ alert('Cancelado.'); return; }
-  if(ans === savedSecret){
-    const raw = prompt('Resposta correta — insira a nova senha:');
-    if(!raw) return;
-    const h = await sha256(raw);
-    localStorage.setItem('kz_hash', h);
-    alert('Senha redefinida. Faz login com a nova senha.');
-  } else alert('Resposta secreta incorreta.');
-}
-
-/* login */
-async function login(){
-  const p = document.getElementById('loginPwd').value.trim();
-  if(!savedHash){ document.getElementById('loginMsg').textContent = 'Nenhuma senha criada. Vai a Configurações.'; return; }
-  const h = await sha256(p);
-  if(h === savedHash){
-    sessionStorage.setItem('kz_session','1');
-    session = true;
-    document.getElementById('loginModal').style.display = 'none';
-    initApp();
-  } else {
-    document.getElementById('loginMsg').textContent = 'Senha incorreta.';
-  }
-}
-function logout(){
-  sessionStorage.removeItem('kz_session');
-  session=false;
-  document.getElementById('loginModal').style.display='flex';
-  showSection('dashboard');
-}
-
-/* ================ IP management ================ */
-function saveIP(){
-  const v = document.getElementById('ipInput').value.trim();
-  if(!v){ alert('Escreve um IP.'); return; }
-  localStorage.setItem('arduino_ip', v);
-  ipStored = v; baseUrl = `http://${v}`;
-  document.getElementById('ipShow').textContent = v;
-  alert('IP salvo. Lembra de reiniciar o Arduino se trocares para DHCP.');
-}
-
-/* ================= Logs handling ================= */
-function pushLog(obj){
-  logs.unshift(obj);
-  if(logs.length>200) logs.pop();
-  localStorage.setItem('kz_logs', JSON.stringify(logs));
-  renderPanelLogs();
-  renderAllLogs();
-  updateSummary();
-  animateNewLog();
-}
-function renderPanelLogs(){
-  const el = document.getElementById('panelLogs');
-  el.innerHTML = logs.slice(0,6).map(l=>`<div class="log-item ${l.new? 'new':''}"><div>${l.msg}</div><div>${l.time}</div></div>`).join('');
-}
-function renderAllLogs(){
-  const el = document.getElementById('allLogs');
-  el.innerHTML = logs.map(l=>`<div class="log-item"><div>${l.msg}</div><div style="color:var(--muted)">${l.time}</div></div>`).join('');
-}
-function clearLogs(){ if(confirm('Apagar todos os logs?')){ logs=[]; localStorage.removeItem('kz_logs'); renderPanelLogs(); renderAllLogs(); updateSummary(); } }
-function animateNewLog(){ const first = document.querySelector('#panelLogs .log-item'); if(first) first.classList.add('new'); setTimeout(()=>{ if(first) first.classList.remove('new'); },900); }
-
-/* ================= Cards (controls) ================= */
-function buildCards(){
-  const grid = document.getElementById('cardsGrid');
-  grid.innerHTML = '';
-  for(let i=1;i<=LOADS;i++){
-    const card = document.createElement('div'); card.className='card'; card.id=`card-${i}`;
-    card.innerHTML = `
-      <div class="head">
-        <h3>Lâmpada ${i}</h3>
-        <div class="badge off" id="badge-${i}">--</div>
-      </div>
-      <div class="state"><span class="ind" id="ind-${i}" style="background:#777"></span><div style="margin-left:8px;color:var(--muted);font-size:13px" id="stext-${i}">Estado: --</div></div>
-      <div class="controls">
-        <button class="btn on" onclick="toggleRelay(${i}, true)">Ligar</button>
-        <button class="btn off" onclick="toggleRelay(${i}, false)">Desligar</button>
-      </div>
-    `;
-    grid.appendChild(card);
-  }
-}
-
-/* perform the fetch to the Arduino endpoints */
-function showFeedback(i, action, ok){
-  const badge = document.getElementById(`badge-${i}`);
-  const ind = document.getElementById(`ind-${i}`);
-  const stext = document.getElementById(`stext-${i}`);
-  if(ok){
-    if(action==='on'){ badge.classList.remove('off'); badge.classList.add('on'); badge.textContent='ON'; ind.style.background= 'linear-gradient(90deg,var(--accent),var(--accent2))'; stext.textContent = 'Estado: LIGADO'; }
-    else { badge.classList.remove('on'); badge.classList.add('off'); badge.textContent='OFF'; ind.style.background= '#ff6b6b'; stext.textContent = 'Estado: DESLIGADO'; }
-    // pulse effect
-    const card = document.getElementById(`card-${i}`);
-    card.classList.add('pulse');
-    setTimeout(()=> card.classList.remove('pulse'),900);
-  } else {
-    // offline error
-    const card = document.getElementById(`card-${i}`);
-    card.style.opacity = '0.6';
-    setTimeout(()=> card.style.opacity = '1',600);
-  }
-}
-
-/* toggle relay: calls Arduino */
-async function toggleRelay(n, turnOn){
-  if(!baseUrl){ alert('Define o IP do Arduino nas Configurações.'); return; }
-  const action = turnOn ? 'on' : 'off';
-  try {
-    const resp = await fetch(`${baseUrl}/relay/${n}/${action}`, {method:'GET', cache:'no-store', mode:'cors'});
-    // try parse json, but tolerate text
-    let ok = resp.ok;
-    showFeedback(n, action, ok);
-    const now = new Date().toLocaleString();
-    pushLog({msg:`Lâmpada ${n} → ${action.toUpperCase()}`, time: now, relay:n, action:action});
-  } catch(err){
-    updateOnline(false);
-    pushLog({msg:`Falha ao aceder Arduino (relay ${n} ${action})`, time: new Date().toLocaleString(), relay:n, action:action});
-    showFeedback(n, action, false);
-  }
-}
-
-/* ============= Online check ============= */
-let onlineState = false;
-async function checkOnline(){
-  if(!baseUrl){ updateOnline(false); return; }
-  try{
-    const r = await fetch(baseUrl+'/', {method:'GET', cache:'no-store', mode:'cors'});
-    if(r.ok){ updateOnline(true); } else updateOnline(false);
-  }catch(e){ updateOnline(false); }
-}
-function updateOnline(isOnline){
-  onlineState = isOnline;
-  const dot = document.getElementById('bigDot');
-  const bigMsg = document.getElementById('bigMsg');
-  const statusMsg = document.getElementById('statusMsg');
-  const onlineDot = document.getElementById('onlineDot');
-  if(isOnline){
-    dot.style.background = 'linear-gradient(90deg,var(--accent),var(--accent2))';
-    bigMsg.textContent = 'Arduino Online';
-    statusMsg.textContent = 'Conectado';
-    onlineDot.style.background = 'linear-gradient(90deg,var(--accent),var(--accent2))';
-  } else {
-    dot.style.background = 'linear-gradient(90deg,var(--warn),#ff8b6b)';
-    bigMsg.textContent = 'Arduino Offline';
-    statusMsg.textContent = 'Desconectado';
-    onlineDot.style.background = 'linear-gradient(90deg,var(--warn),#ff8b6b)';
-  }
-}
-
-/* ============= Charts ============= */
-let usageChart=null, miniChart=null;
-function renderCharts(){
-  const ctx = document.getElementById('usageChart').getContext('2d');
-  const ctx2 = document.getElementById('miniChart').getContext('2d');
-  const counts = getCounts();
-
-  if(usageChart) usageChart.destroy();
-  usageChart = new Chart(ctx, {
-    type:'bar',
-    data:{
-      labels: Array.from({length:LOADS},(_,i)=>`Lâmpada ${i+1}`),
-      datasets:[{
-        label:'Ações ON',
-        data: counts,
-        backgroundColor: counts.map((c,i)=>`rgba(0,230,118,${0.35 + Math.min(0.65, c/10)})`),
-        borderRadius:8,
-      }]
-    },
-    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
-  });
-
-  if(miniChart) miniChart.destroy();
-  miniChart = new Chart(ctx2, {
-    type:'doughnut',
-    data:{
-      labels: ['L1','L2','L3','L4'],
-      datasets:[{data:counts, backgroundColor:['#00e676','#00bcd4','#8e70ff','#ffd166']}]
-    },
-    options:{plugins:{legend:{display:false}}}
-  });
-
-  document.getElementById('totalActions').textContent = counts.reduce((a,b)=>a+b,0);
-}
-
-function getCounts(){
-  const counts = Array(LOADS).fill(0);
-  logs.forEach(item=>{
-    if(item.action === 'on'){
-      const idx = item.relay - 1;
-      if(idx>=0 && idx<LOADS) counts[idx]++;
+    // ===== FUNÇÕES DE NAVEGAÇÃO =====
+    function showSection(sectionId) {
+      // Oculta todas as seções
+      document.querySelectorAll('.section').forEach(section => {
+        section.style.display = 'none';
+      });
+      
+      // Remove classe active de todos os itens do menu
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      // Mostra a seção selecionada e ativa o menu correspondente
+      document.getElementById(sectionId).style.display = 'block';
+      event.target.classList.add('active');
     }
-  });
-  return counts;
-}
 
-/* ============== Init & rendering ============== */
-function renderAll(){
-  buildCards();
-  renderPanelLogs();
-  renderAllLogs();
-  renderCharts();
-  document.getElementById('ipShow').textContent = ipStored || '--';
-  updateOnline(false);
-}
+    // ===== FUNÇÕES DE CONTROLE =====
+    function toggleSwitch(element, lampadaId) {
+      const index = lampadaId - 1;
+      const novoEstado = !lampadasEstado[index];
+      
+      // Atualiza estado local
+      lampadasEstado[index] = novoEstado;
+      
+      // Atualiza UI
+      element.classList.toggle("on");
+      const card = element.closest('.card');
+      const status = card.querySelector('.status');
 
-/* ============= Update summary ============= */
-function updateSummary(){ renderCharts(); renderPanelLogs(); renderAllLogs(); }
+      if (novoEstado) {
+        status.textContent = "ON";
+        status.className = "status on";
+      } else {
+        status.textContent = "OFF";
+        status.className = "status off";
+      }
+      
+      // Envia comando para Arduino
+      controlarLampada(lampadaId, novoEstado);
+    }
 
-/* ============= Animate UI small ============= */
-function smallPulse(el){ if(!el) return; el.style.transform='scale(1.03)'; setTimeout(()=>el.style.transform='none',220); }
+    function controlarLampada(lampadaId, ligar) {
+      if (!arduinoIP) {
+        alert('Configure primeiro o IP do Arduino!');
+        return;
+      }
+      
+      const comando = ligar ? 'on' : 'off';
+      // ✅ ENDPOINT COMPATÍVEL COM SEU ARDUINO
+      const endpoint = `/lamp${lampadaId}=${comando}`;
+      
+      fetch(`http://${arduinoIP}${endpoint}`)
+        .then(response => {
+          if (response.ok) {
+            console.log(`Lâmpada ${lampadaId} ${comando === 'on' ? 'ligada' : 'desligada'}`);
+            lampadasEstado[lampadaId - 1] = ligar;
+          } else {
+            console.error('Erro na resposta do Arduino');
+            // Reverte estado na UI em caso de erro
+            setTimeout(() => {
+              const toggle = document.querySelector(`.card:nth-child(${lampadaId}) .toggle`);
+              const status = document.querySelector(`.card:nth-child(${lampadaId}) .status`);
+              
+              if (toggle) {
+                toggle.classList.toggle('on');
+                lampadasEstado[lampadaId - 1] = !ligar;
+                
+                if (status) {
+                  status.textContent = ligar ? "OFF" : "ON";
+                  status.className = ligar ? "status off" : "status on";
+                }
+              }
+            }, 100);
+          }
+        })
+        .catch(error => {
+          console.error('Erro ao conectar com Arduino:', error);
+          alert('Erro ao conectar com o Arduino. Verifique o IP e a conexão.');
+          
+          // Reverte estado na UI
+          setTimeout(() => {
+            const toggle = document.querySelector(`.card:nth-child(${lampadaId}) .toggle`);
+            const status = document.querySelector(`.card:nth-child(${lampadaId}) .status`);
+            
+            if (toggle) {
+              toggle.classList.toggle('on');
+              lampadasEstado[lampadaId - 1] = !ligar;
+              
+              if (status) {
+                status.textContent = ligar ? "OFF" : "ON";
+                status.className = ligar ? "status off" : "status on";
+              }
+            }
+          }, 100);
+        });
+    }
 
-/* ============= Start app ============= */
-function initApp(){
-  if(!session){ document.getElementById('loginModal').style.display = 'flex'; return; }
-  document.getElementById('loginModal').style.display = 'none';
-  showSection('dashboard');
-  renderAll();
-  // periodic checks
-  checkOnline();
-  setInterval(checkOnline, 3000);
-  // refresh charts every few seconds (in case logs updated)
-  setInterval(()=>{ updateSummary(); }, 1500);
-}
+    function salvarIP() {
+      const ipInput = document.getElementById('arduinoIP');
+      const ip = ipInput.value.trim();
+      
+      if (!ip) {
+        alert('Por favor, insira um IP válido.');
+        return;
+      }
+      
+      // Validação básica de IP
+      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+      if (!ipRegex.test(ip)) {
+        alert('Por favor, insira um IP válido (ex: 192.168.1.77)');
+        return;
+      }
+      
+      arduinoIP = ip;
+      localStorage.setItem('arduino_ip', ip);
+      alert(`IP do Arduino salvo: ${ip}`);
+    }
 
-/* ============= Helpers for UI flow ============= */
-function gotoCreate(){ showSection('settings'); document.getElementById('loginModal').style.display='none'; }
-function triggerRecovery(){ showSection('settings'); alert('Use a opção "Recuperar" para redefinir senha com a resposta secreta.'); }
-
-/* ============= On load ============= */
-window.addEventListener('load', async ()=>{
-  // session check
-  session = sessionStorage.getItem('kz_session') === '1';
-  savedHash = localStorage.getItem('kz_hash');
-  savedSecret = localStorage.getItem('kz_secret');
-
-  // show login modal if no session
-  if(!session){
-    document.getElementById('loginModal').style.display = 'flex';
-  } else {
-    document.getElementById('loginModal').style.display = 'none';
-    initApp();
-  }
-
-  // initial render (cards only)
-  buildCards();
-  renderPanelLogs();
-  renderAllLogs();
-  renderCharts();
-
-  // set ip input if present
-  if(ipStored){ document.getElementById('ipInput').value = ipStored; baseUrl = `http://${ipStored}`; document.getElementById('ipShow').textContent = ipStored; }
-});
-
-/* keyboard shortcuts (developer) */
-document.addEventListener('keydown', (e)=>{
-  if(e.key==='m'){ toggleMenu(); }
-});
-</script>
+    // ===== INICIALIZAÇÃO =====
+    document.addEventListener('DOMContentLoaded', function() {
+      // Carrega IP salvo
+      if (arduinoIP) {
+        document.getElementById('arduinoIP').value = arduinoIP;
+      }
+      
+      // Inicializa gráfico
+      const ctx = document.getElementById('chart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
+          datasets: [{
+            label: 'Consumo (W)',
+            data: [12, 19, 8, 17, 14, 12, 7],
+            borderColor: '#1976d2',
+            backgroundColor: 'rgba(25, 118, 210, 0.1)',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Watts (W)'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Dias da Semana'
+              }
+            }
+          }
+        }
+      });
+    });
+  </script>
 </body>
   </html>
