@@ -1,1326 +1,444 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-br">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Painel IoT — Controle de Cargas</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  /* ======== DESIGN ENTERPRISE ======== */
-  :root {
-    --primary: #1976d2;
-    --primary-hover: #0e63b8;
-    --primary-light: #e3f2fd;
-
-    --bg: #f4f6f8;
-    --card: #ffffff;
-    --border: #e0e0e0;
-
-    --text: #1f1f1f;
-    --text-light: #5f6368;
-
-    --success: #2e7d32;
-    --danger: #c62828;
-
-    --radius: 12px;
-    --shadow: 0 4px 12px rgba(0,0,0,0.06);
-  }
-
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Inter", sans-serif;
-  }
-
-  body {
-    background: var(--bg);
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  /* ===== SIDEBAR ===== */
-  .sidebar {
-    width: 250px;
-    background: #fff;
-    border-right: 1px solid var(--border);
-    padding: 24px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    box-shadow: var(--shadow);
-  }
-
-  .sidebar h2 {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--primary);
-  }
-
-  .nav-item {
-    padding: 12px 14px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    color: var(--text-light);
-    font-size: 15px;
-    transition: 0.2s ease;
-  }
-
-  .nav-item:hover,
-  .nav-item.active {
-    background: var(--primary-light);
-    color: var(--primary);
-  }
-
-  /* ===== CONTENT ===== */
-  .content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  header {
-    background: #fff;
-    padding: 20px 30px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  header h1 {
-    font-size: 22px;
-    font-weight: 600;
-  }
-
-  /* ===== MAIN AREA ===== */
-  .main-content {
-    flex: 1;
-    padding: 32px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-  }
-
-  /* ===== CARD PADRÃO ===== */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 22px;
-    box-shadow: var(--shadow);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .card-title {
-    font-size: 17px;
-    font-weight: 600;
-  }
-
-  /* ===== SWITCH ===== */
-  .switch {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .toggle {
-    width: 50px;
-    height: 26px;
-    background: #cfcfcf;
-    border-radius: 50px;
-    cursor: pointer;
-    position: relative;
-    transition: background 0.25s ease;
-  }
-
-  .toggle-circle {
-    width: 22px;
-    height: 22px;
-    background: #fff;
-    border-radius: 50%;
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    transition: transform 0.25s ease;
-  }
-
-  .toggle.on {
-    background: var(--primary);
-  }
-
-  .toggle.on .toggle-circle {
-    transform: translateX(24px);
-  }
-
-  /* ===== STATUS ===== */
-  .status {
-    font-size: 14px;
-    font-weight: 600;
-    padding: 6px 12px;
-    border-radius: 6px;
-    width: fit-content;
-  }
-
-  .status.on {
-    background: var(--primary-light);
-    color: var(--primary);
-  }
-
-  .status.off {
-    background: #ffebee;
-    color: var(--danger);
-  }
-
-  /* ===== BUTTONS ===== */
-  .btn {
-    padding: 12px 18px;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: var(--radius);
-    border: none;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-
-  .btn-primary {
-    background: var(--primary);
-    color: #fff;
-  }
-
-  .btn-primary:hover {
-    background: var(--primary-hover);
-  }
-
-  .btn-on {
-    background: var(--success);
-    color: #fff;
-  }
-
-  .btn-on:hover {
-    background: #1b5e20;
-  }
-
-  .btn-off {
-    background: var(--danger);
-    color: #fff;
-  }
-
-  .btn-off:hover {
-    background: #b71c1c;
-  }
-
-  .btn-secondary {
-    background: #f5f5f5;
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-
-  .btn-secondary:hover {
-    background: #e0e0e0;
-  }
-
-  .controls {
-    display: flex;
-    gap: 10px;
-  }
-
-  /* ===== GRID ===== */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-    gap: 24px;
-  }
-
-  .grid-2 {
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  }
-
-  /* ===== CONFIG SECTION ===== */
-  .config-section {
-    background: var(--card);
-    border: 1px solid var(--border);
-    padding: 24px;
-    border-radius: var(--radius);
-    max-width: 420px;
-    box-shadow: var(--shadow);
-  }
-
-  .config-section h3 {
-    font-size: 18px;
-    margin-bottom: 16px;
-  }
-
-  .input-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .config-section input {
-    flex: 1;
-    padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 15px;
-  }
-
-  /* ===== CHART ===== */
-  .chart-container {
-    background: var(--card);
-    padding: 20px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    height: 320px;
-    box-shadow: var(--shadow);
-  }
-
-  .chart-container h3 {
-    margin-bottom: 16px;
-    font-size: 18px;
-  }
-
-  /* ===== INFO SECTION ===== */
-  .info-section {
-    background: var(--card);
-    padding: 34px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
-    line-height: 1.65;
-  }
-
-  .info-section h2 {
-    color: var(--primary);
-    margin-bottom: 20px;
-    font-size: 24px;
-  }
-
-  .info-section h3 {
-    color: var(--text);
-    margin: 25px 0 15px 0;
-    font-size: 18px;
-  }
-
-  .info-section p {
-    margin-bottom: 15px;
-    color: var(--text-light);
-  }
-
-  .info-section ul {
-    margin-left: 20px;
-    margin-bottom: 20px;
-  }
-
-  .info-section li {
-    margin-bottom: 8px;
-    color: var(--text-light);
-  }
-
-  .developers {
-    background: var(--primary-light);
-    padding: 20px;
-    border-radius: var(--radius);
-    border-left: 4px solid var(--primary);
-    margin-top: 25px;
-  }
-
-  .developers h4 {
-    color: var(--primary);
-    margin-bottom: 10px;
-  }
-
-  /* ===== LOGS SECTION ===== */
-  .logs-container {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0;
-    box-shadow: var(--shadow);
-    max-height: 500px;
-    overflow-y: auto;
-  }
-
-  .log-header {
-    padding: 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .log-list {
-    padding: 0;
-  }
-
-  .log-item {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: background 0.2s;
-  }
-
-  .log-item:hover {
-    background: var(--primary-light);
-  }
-
-  .log-item:last-child {
-    border-bottom: none;
-  }
-
-  .log-time {
-    color: var(--text-light);
-    font-size: 13px;
-  }
-
-  .log-message {
-    flex: 1;
-    margin: 0 15px;
-  }
-
-  .log-type {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-
-  .log-success {
-    background: #e8f5e8;
-    color: var(--success);
-  }
-
-  .log-error {
-    background: #ffebee;
-    color: var(--danger);
-  }
-
-  .log-info {
-    background: var(--primary-light);
-    color: var(--primary);
-  }
-
-  /* ===== TABLE STYLES ===== */
-  .table-container {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    box-shadow: var(--shadow);
-  }
-
-  .table-header {
-    padding: 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  th, td {
-    padding: 16px 20px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-
-  th {
-    background: var(--primary-light);
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 14px;
-  }
-
-  tr:hover {
-    background: #fafafa;
-  }
-
-  /* RESPONSIVO */
-  @media (max-width: 768px) {
-    body {
-      flex-direction: column;
-    }
-    
-    .sidebar {
-      width: 100%;
-      flex-direction: row;
-      overflow-x: auto;
-      padding: 16px;
-    }
-    
-    .sidebar h2 {
-      display: none;
-    }
-    
-    .nav-item {
-      white-space: nowrap;
-    }
-    
-    .grid {
-      grid-template-columns: 1fr;
-    }
-    
-    .grid-2 {
-      grid-template-columns: 1fr;
-    }
-    
-    .config-section {
-      max-width: 100%;
-    }
-    
-    .main-content {
-      padding: 20px;
-    }
-    
-    .log-item {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-    }
-    
-    .log-message {
-      margin: 0;
-    }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Lâmpadas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+        
+        .ip-config {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .connect-btn {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .connect-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .connect-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .connection-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .connection-status.connected {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+        }
+        
+        .connection-status.disconnected {
+            background-color: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+        
+        .lampadas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .lampada {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .lampada:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .lampada h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .lampada.off {
+            background-color: #ffebee;
+        }
+        
+        .lampada.on {
+            background-color: #e8f5e9;
+        }
+        
+        .status {
+            font-weight: bold;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .status.off {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .status.on {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .message.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+        }
+        
+        .message.error {
+            background-color: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <h2>Painel IoT</h2>
-    <div class="nav-item active" onclick="showSection('dashboard')">Dashboard</div>
-    <div class="nav-item" onclick="showSection('cargas')">Cargas</div>
-    <div class="nav-item" onclick="showSection('graficos')">Gráficos</div>
-    <div class="nav-item" onclick="showSection('logs')">Logs</div>
-    <div class="nav-item" onclick="showSection('informacoes')">Informações</div>
-    <div class="nav-item" onclick="showSection('configuracoes')">Configurações</div>
-  </div>
-
-  <!-- MAIN AREA -->
-  <div class="content">
-    <header>
-      <h1>Controle Inteligente de Cargas</h1>
-    </header>
-
-    <div class="main-content">
-      <!-- SEÇÃO DASHBOARD -->
-      <div id="dashboard" class="section active">
-        <!-- Configuração IP -->
-        <div class="config-section">
-          <h3>Configurar IP do Arduino</h3>
-          <div class="input-group">
-            <input id="arduinoIP" type="text" placeholder="Ex: 192.168.1.77" />
-            <button class="btn btn-primary" onclick="salvarIP()">Guardar IP</button>
-          </div>
-        </div>
-
-        <!-- Grid de Cargas -->
-        <div class="grid">
-          <!-- CARD 1 -->
-          <div class="card">
-            <div class="card-title">Lâmpada 1</div>
-            <span class="status off">OFF</span>
-            <div class="switch">
-              <small>Estado</small>
-              <div class="toggle" onclick="toggleSwitch(this, 1)">
-                <div class="toggle-circle"></div>
-              </div>
-            </div>
-            <div class="controls">
-              <button class="btn btn-on" onclick="controlarLampada(1, true)">Ligar</button>
-              <button class="btn btn-off" onclick="controlarLampada(1, false)">Desligar</button>
-            </div>
-          </div>
-
-          <!-- CARD 2 -->
-          <div class="card">
-            <div class="card-title">Lâmpada 2</div>
-            <span class="status off">OFF</span>
-            <div class="switch">
-              <small>Estado</small>
-              <div class="toggle" onclick="toggleSwitch(this, 2)">
-                <div class="toggle-circle"></div>
-              </div>
-            </div>
-            <div class="controls">
-              <button class="btn btn-on" onclick="controlarLampada(2, true)">Ligar</button>
-              <button class="btn btn-off" onclick="controlarLampada(2, false)">Desligar</button>
-            </div>
-          </div>
-
-          <!-- CARD 3 -->
-          <div class="card">
-            <div class="card-title">Lâmpada 3</div>
-            <span class="status off">OFF</span>
-            <div class="switch">
-              <small>Estado</small>
-              <div class="toggle" onclick="toggleSwitch(this, 3)">
-                <div class="toggle-circle"></div>
-              </div>
-            </div>
-            <div class="controls">
-              <button class="btn btn-on" onclick="controlarLampada(3, true)">Ligar</button>
-              <button class="btn btn-off" onclick="controlarLampada(3, false)">Desligar</button>
-            </div>
-          </div>
-
-          <!-- CARD 4 -->
-          <div class="card">
-            <div class="card-title">Lâmpada 4</div>
-            <span class="status off">OFF</span>
-            <div class="switch">
-              <small>Estado</small>
-              <div class="toggle" onclick="toggleSwitch(this, 4)">
-                <div class="toggle-circle"></div>
-              </div>
-            </div>
-            <div class="controls">
-              <button class="btn btn-on" onclick="controlarLampada(4, true)">Ligar</button>
-              <button class="btn btn-off" onclick="controlarLampada(4, false)">Desligar</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Gráfico -->
-        <div class="chart-container">
-          <h3>Consumo de Energia</h3>
-          <canvas id="chart"></canvas>
-        </div>
-      </div>
-
-      <!-- SEÇÃO CARGAS -->
-      <div id="cargas" class="section" style="display: none;">
-        <div class="card">
-          <h2>Gestão de Cargas</h2>
-          <p>Visualize e gerencie todas as cargas conectadas ao sistema.</p>
-        </div>
-
-        <div class="table-container">
-          <div class="table-header">
-            <h3>Cargas Configuradas</h3>
-            <button class="btn btn-primary" onclick="adicionarCarga()">Adicionar Carga</button>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Estado</th>
-                <th>Potência</th>
-                <th>Última Atividade</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td>Lâmpada Sala</td>
-                <td><span class="status off">OFF</span></td>
-                <td>60W</td>
-                <td>10:30 AM</td>
-                <td>
-                  <button class="btn btn-on" style="padding: 6px 12px; font-size: 12px;">Ligar</button>
-                  <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Editar</button>
-                </td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>Lâmpada Quarto</td>
-                <td><span class="status on">ON</span></td>
-                <td>40W</td>
-                <td>09:15 AM</td>
-                <td>
-                  <button class="btn btn-off" style="padding: 6px 12px; font-size: 12px;">Desligar</button>
-                  <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Editar</button>
-                </td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td>Lâmpada Cozinha</td>
-                <td><span class="status off">OFF</span></td>
-                <td>75W</td>
-                <td>Ontem</td>
-                <td>
-                  <button class="btn btn-on" style="padding: 6px 12px; font-size: 12px;">Ligar</button>
-                  <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Editar</button>
-                </td>
-              </tr>
-              <tr>
-                <td>4</td>
-                <td>Lâmpada Garagem</td>
-                <td><span class="status on">ON</span></td>
-                <td>100W</td>
-                <td>11:45 AM</td>
-                <td>
-                  <button class="btn btn-off" style="padding: 6px 12px; font-size: 12px;">Desligar</button>
-                  <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Editar</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="grid grid-2" style="margin-top: 24px;">
-          <div class="card">
-            <h3>Estatísticas de Uso</h3>
-            <p><strong>Total de Cargas:</strong> 4</p>
-            <p><strong>Cargas Ligadas:</strong> 2</p>
-            <p><strong>Consumo Total:</strong> 140W</p>
-            <p><strong>Economia Mensal:</strong> 15%</p>
-          </div>
-          <div class="card">
-            <h3>Ações Rápidas</h3>
-            <div class="controls" style="flex-direction: column; gap: 10px;">
-              <button class="btn btn-on" onclick="ligarTodas()">Ligar Todas</button>
-              <button class="btn btn-off" onclick="desligarTodas()">Desligar Todas</button>
-              <button class="btn btn-secondary" onclick="exportarDados()">Exportar Dados</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SEÇÃO GRÁFICOS -->
-      <div id="graficos" class="section" style="display: none;">
-        <div class="card">
-          <h2>Gráficos Detalhados</h2>
-          <p>Análise visual do consumo e desempenho do sistema.</p>
-        </div>
-
-        <div class="grid grid-2">
-          <div class="chart-container">
-            <h3>Consumo por Hora (Hoje)</h3>
-            <canvas id="chartHora"></canvas>
-          </div>
-          <div class="chart-container">
-            <h3>Distribuição por Carga</h3>
-            <canvas id="chartDistribuicao"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-container" style="margin-top: 24px;">
-          <h3>Consumo Mensal</h3>
-          <canvas id="chartMensal"></canvas>
-        </div>
-
-        <div class="grid grid-2" style="margin-top: 24px;">
-          <div class="card">
-            <h3>Métricas Principais</h3>
-            <p><strong>Consumo Hoje:</strong> 2.4 kWh</p>
-            <p><strong>Média Diária:</strong> 3.1 kWh</p>
-            <p><strong>Pico de Consumo:</strong> 450W</p>
-            <p><strong>Eficiência:</strong> 87%</p>
-          </div>
-          <div class="card">
-            <h3>Comparativo</h3>
-            <p><strong>Vs. Mês Passado:</strong> -12%</p>
-            <p><strong>Vs. Média Geral:</strong> -8%</p>
-            <p><strong>Meta do Mês:</strong> 90 kWh</p>
-            <p><strong>Progresso:</strong> 65%</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- SEÇÃO LOGS -->
-      <div id="logs" class="section" style="display: none;">
-        <div class="card">
-          <h2>Logs do Sistema</h2>
-          <p>Histórico completo de todas as atividades e eventos do sistema.</p>
-        </div>
-
-        <div class="logs-container">
-          <div class="log-header">
-            <h3>Histórico de Atividades</h3>
-            <div>
-              <button class="btn btn-secondary" onclick="filtrarLogs('todos')">Todos</button>
-              <button class="btn btn-secondary" onclick="filtrarLogs('sucesso')">Sucesso</button>
-              <button class="btn btn-secondary" onclick="filtrarLogs('erro')">Erros</button>
-              <button class="btn btn-primary" onclick="limparLogs()">Limpar Logs</button>
-            </div>
-          </div>
-          <div class="log-list" id="logList">
-            <!-- Logs serão inseridos aqui via JavaScript -->
-          </div>
-        </div>
-
-        <div class="grid grid-2" style="margin-top: 24px;">
-          <div class="card">
-            <h3>Estatísticas de Logs</h3>
-            <p><strong>Total de Entradas:</strong> <span id="totalLogs">0</span></p>
-            <p><strong>Sucessos:</strong> <span id="sucessosLogs">0</span></p>
-            <p><strong>Erros:</strong> <span id="errosLogs">0</span></p>
-            <p><strong>Última Atividade:</strong> <span id="ultimaAtividade">-</span></p>
-          </div>
-          <div class="card">
-            <h3>Exportar Dados</h3>
-            <p>Exporte o histórico completo para análise externa.</p>
-            <div class="controls" style="flex-direction: column; gap: 10px; margin-top: 15px;">
-              <button class="btn btn-primary" onclick="exportarLogsCSV()">Exportar CSV</button>
-              <button class="btn btn-secondary" onclick="exportarLogsJSON()">Exportar JSON</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SEÇÃO INFORMAÇÕES -->
-      <div id="informacoes" class="section" style="display: none;">
-        <div class="info-section">
-          <h2>Sobre o Projeto</h2>
-          
-          <h3>O que é este sistema?</h3>
-          <p>Este é um sistema completo de controle de cargas IoT desenvolvido para automatizar e gerenciar remotamente até 4 lâmpadas ou dispositivos elétricos de 220V através de uma interface web moderna e intuitiva.</p>
-
-          <h3>Como funciona?</h3>
-          <p>O sistema utiliza uma arquitetura cliente-servidor onde:</p>
-          <ul>
-            <li><strong>Interface Web:</strong> Permite controlar os dispositivos através de qualquer navegador ou dispositivo móvel</li>
-            <li><strong>Arduino com Ethernet:</strong> Atua como servidor local recebendo comandos via HTTP</li>
-            <li><strong>Módulo de Relés:</strong> Interface segura entre o Arduino (5V) e as cargas elétricas (220V)</li>
-            <li><strong>Protocolo HTTP:</strong> Comunicação simples e eficiente na rede local</li>
-          </ul>
-
-          <h3>Para que serve?</h3>
-          <p>Este sistema é ideal para:</p>
-          <ul>
-            <li><strong>Automação Residencial:</strong> Controlar iluminação de forma remota</li>
-            <li><strong>Eficiência Energética:</strong> Gerenciar consumo elétrico inteligentemente</li>
-            <li><strong>Segurança:</strong> Simular presença através de acionamento programado</li>
-            <li><strong>Controle Empresarial:</strong> Gerenciar iluminação de escritórios e espaços comerciais</li>
-            <li><strong>Educação:</strong> Aprender sobre IoT, eletrônica e programação</li>
-          </ul>
-
-          <h3>Como usar?</h3>
-          <p><strong>Configuração Inicial:</strong></p>
-          <ul>
-            <li>Conecte o Arduino à rede Ethernet</li>
-            <li>Configure o IP do Arduino na seção "Dashboard"</li>
-            <li>Conecte as lâmpadas aos relés conforme o diagrama elétrico</li>
-          </ul>
-
-          <p><strong>Uso Diário:</strong></p>
-          <ul>
-            <li>Acesse a interface através de qualquer dispositivo na mesma rede</li>
-            <li>Use os botões "Ligar/Desligar" ou os switches para controlar cada carga</li>
-            <li>Monitore o consumo através dos gráficos</li>
-            <li>Consulte o histórico de operações nos logs</li>
-          </ul>
-
-          <h3>Características Técnicas</h3>
-          <ul>
-            <li>Controle de até 4 cargas independentes</li>
-            <li>Interface web responsiva (funciona em mobile e desktop)</li>
-            <li>Comunicação via protocolo HTTP</li>
-            <li>Armazenamento local de configurações</li>
-            <li>Visualização de dados em tempo real</li>
-            <li>Design moderno e intuitivo</li>
-          </ul>
-
-          <div class="developers">
-            <h4>Desenvolvido por:</h4>
-            <p><strong>Jalussiel e Jomarcio</strong></p>
-            <p>Este projeto representa uma solução prática e acessível para automação residencial e controle inteligente de energia, combinando eletrônica, programação e design de interfaces para criar um sistema completo de IoT.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- SEÇÃO CONFIGURAÇÕES -->
-      <div id="configuracoes" class="section" style="display: none;">
-        <div class="card">
-          <h2>Configurações Avançadas</h2>
-          <p>Configure parâmetros avançados do sistema.</p>
-        </div>
-
-        <div class="grid grid-2">
-          <div class="card">
-            <h3>Configurações de Rede</h3>
-            <div class="input-group" style="flex-direction: column; align-items: flex-start; gap: 12px;">
-              <div style="width: 100%;">
-                <label style="display: block; margin-bottom: 5px; font-weight: 600;">IP do Arduino</label>
-                <input id="configArduinoIP" type="text" placeholder="192.168.1.177" style="width: 100%;" />
-              </div>
-              <div style="width: 100%;">
-                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Porta</label>
-                <input type="text" value="80" style="width: 100%;" readonly />
-              </div>
-              <button class="btn btn-primary" onclick="salvarConfigRede()">Salvar Configurações</button>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>Preferências do Sistema</h3>
-            <div style="display: flex; flex-direction: column; gap: 15px;">
-              <div class="switch">
-                <span>Atualização Automática</span>
-                <div class="toggle" onclick="toggleConfig(this, 'autoUpdate')">
-                  <div class="toggle-circle"></div>
-                </div>
-              </div>
-              <div class="switch">
-                <span>Notificações por Som</span>
-                <div class="toggle" onclick="toggleConfig(this, 'soundNotifications')">
-                  <div class="toggle-circle"></div>
-                </div>
-              </div>
-              <div class="switch">
-                <span>Modo Escuro</span>
-                <div class="toggle" onclick="toggleConfig(this, 'darkMode')">
-                  <div class="toggle-circle"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="margin-top: 24px;">
-          <h3>Manutenção do Sistema</h3>
-          <div class="controls">
-            <button class="btn btn-secondary" onclick="fazerBackup()">Fazer Backup</button>
-            <button class="btn btn-secondary" onclick="restaurarBackup()">Restaurar Backup</button>
-            <button class="btn btn-off" onclick="reiniciarSistema()">Reiniciar Sistema</button>
-            <button class="btn btn-off" onclick="resetarConfiguracoes()">Resetar Configurações</button>
-          </div>
-        </div>
-
-        <div class="grid grid-2" style="margin-top: 24px;">
-          <div class="card">
-            <h3>Informações do Sistema</h3>
-            <p><strong>Versão:</strong> 2.1.0</p>
-            <p><strong>Última Atualização:</strong> 15/01/2024</p>
-            <p><strong>Arduino Conectado:</strong> <span id="statusConexao">Verificando...</span></p>
-            <p><strong>Uptime:</strong> <span id="systemUptime">-</span></p>
-          </div>
-          <div class="card">
-            <h3>Suporte</h3>
-            <p>Precisa de ajuda? Entre em contato com nossa equipe de suporte.</p>
-            <div class="controls" style="flex-direction: column; gap: 10px; margin-top: 15px;">
-              <button class="btn btn-primary" onclick="abrirDocumentacao()">Documentação</button>
-              <button class="btn btn-secondary" onclick="reportarProblema()">Reportar Problema</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ===== VARIÁVEIS GLOBAIS =====
-    let arduinoIP = localStorage.getItem('arduino_ip') || '';
-    let lampadasEstado = [false, false, false, false];
-    let systemLogs = JSON.parse(localStorage.getItem('system_logs') || '[]');
-    let systemStartTime = new Date();
-
-    // ===== FUNÇÕES DE NAVEGAÇÃO =====
-    function showSection(sectionId) {
-      document.querySelectorAll('.section').forEach(section => {
-        section.style.display = 'none';
-      });
-      
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-      });
-      
-      document.getElementById(sectionId).style.display = 'block';
-      event.target.classList.add('active');
-
-      // Atualiza conteúdo específico da seção
-      if (sectionId === 'logs') {
-        atualizarLogs();
-      } else if (sectionId === 'graficos') {
-        inicializarGraficosAvancados();
-      } else if (sectionId === 'configuracoes') {
-        atualizarInfoSistema();
-      }
-    }
-
-    // ===== FUNÇÕES DE CONTROLE =====
-    function toggleSwitch(element, lampadaId) {
-      const index = lampadaId - 1;
-      const novoEstado = !lampadasEstado[index];
-      
-      lampadasEstado[index] = novoEstado;
-      element.classList.toggle("on");
-      const card = element.closest('.card');
-      const status = card.querySelector('.status');
-
-      if (novoEstado) {
-        status.textContent = "ON";
-        status.className = "status on";
-      } else {
-        status.textContent = "OFF";
-        status.className = "status off";
-      }
-      
-      controlarLampada(lampadaId, novoEstado);
-    }
-
-    function controlarLampada(lampadaId, ligar) {
-      if (!arduinoIP) {
-        alert('Configure primeiro o IP do Arduino!');
-        return;
-      }
-      
-      const comando = ligar ? 'on' : 'off';
-      const endpoint = `/lamp${lampadaId}=${comando}`;
-      
-      // Adicionar log antes de enviar comando
-      adicionarLog(`Enviando comando: Lâmpada ${lampadaId} ${comando.toUpperCase()}`, 'info');
-      
-      fetch(`http://${arduinoIP}${endpoint}`)
-        .then(response => {
-          if (response.ok) {
-            console.log(`Lâmpada ${lampadaId} ${comando === 'on' ? 'ligada' : 'desligada'}`);
-            lampadasEstado[lampadaId - 1] = ligar;
-            adicionarLog(`Lâmpada ${lampadaId} ${comando === 'on' ? 'ligada' : 'desligada'} com sucesso`, 'success');
-          } else {
-            console.error('Erro na resposta do Arduino');
-            adicionarLog(`Erro ao controlar Lâmpada ${lampadaId}`, 'error');
-            setTimeout(() => reverterEstado(lampadaId, ligar), 100);
-          }
-        })
-        .catch(error => {
-          console.error('Erro ao conectar com Arduino:', error);
-          adicionarLog(`Falha na conexão com Arduino - ${error.message}`, 'error');
-          alert('Erro ao conectar com o Arduino. Verifique o IP e a conexão.');
-          setTimeout(() => reverterEstado(lampadaId, ligar), 100);
-        });
-    }
-
-    function reverterEstado(lampadaId, estadoDesejado) {
-      const toggle = document.querySelector(`.card:nth-child(${lampadaId}) .toggle`);
-      const status = document.querySelector(`.card:nth-child(${lampadaId}) .status`);
-      
-      if (toggle) {
-        toggle.classList.toggle('on');
-        lampadasEstado[lampadaId - 1] = !estadoDesejado;
+    <div class="container">
+        <h1>Controle de Lâmpadas</h1>
         
-        if (status) {
-          status.textContent = estadoDesejado ? "OFF" : "ON";
-          status.className = estadoDesejado ? "status off" : "status on";
-        }
-      }
-    }
+        <div class="ip-config">
+            <label for="ip">IP do Arduino:</label>
+            <input type="text" id="ip" placeholder="Ex: 192.168.1.177">
+            <button class="connect-btn" id="connectBtn">Conectar</button>
+            <div class="connection-status" id="connectionStatus"></div>
+        </div>
+        
+        <div class="lampadas">
+            <div class="lampada off" data-lamp="1">
+                <h3>Lâmpada 1</h3>
+                <div class="status off">DESLIGADA</div>
+            </div>
+            
+            <div class="lampada off" data-lamp="2">
+                <h3>Lâmpada 2</h3>
+                <div class="status off">DESLIGADA</div>
+            </div>
+            
+            <div class="lampada off" data-lamp="3">
+                <h3>Lâmpada 3</h3>
+                <div class="status off">DESLIGADA</div>
+            </div>
+            
+            <div class="lampada off" data-lamp="4">
+                <h3>Lâmpada 4</h3>
+                <div class="status off">DESLIGADA</div>
+            </div>
+        </div>
+        
+        <div class="message" id="message"></div>
+    </div>
 
-    function salvarIP() {
-      const ipInput = document.getElementById('arduinoIP');
-      const ip = ipInput.value.trim();
-      
-      if (!ip) {
-        alert('Por favor, insira um IP válido.');
-        return;
-      }
-      
-      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-      if (!ipRegex.test(ip)) {
-        alert('Por favor, insira um IP válido (ex: 192.168.1.77)');
-        return;
-      }
-      
-      arduinoIP = ip;
-      localStorage.setItem('arduino_ip', ip);
-      adicionarLog(`IP do Arduino atualizado para: ${ip}`, 'success');
-      alert(`IP do Arduino salvo: ${ip}`);
-    }
-
-    // ===== FUNÇÕES DAS ABAS =====
-    
-    // CARGAS
-    function adicionarCarga() {
-      alert('Funcionalidade de adicionar carga será implementada em breve!');
-      adicionarLog('Tentativa de adicionar nova carga', 'info');
-    }
-
-    function ligarTodas() {
-      for (let i = 1; i <= 4; i++) {
-        controlarLampada(i, true);
-      }
-    }
-
-    function desligarTodas() {
-      for (let i = 1; i <= 4; i++) {
-        controlarLampada(i, false);
-      }
-    }
-
-    function exportarDados() {
-      adicionarLog('Exportação de dados solicitada', 'info');
-      alert('Dados exportados com sucesso!');
-    }
-
-    // LOGS
-    function adicionarLog(mensagem, tipo) {
-      const log = {
-        id: Date.now(),
-        timestamp: new Date().toLocaleString('pt-BR'),
-        message: mensagem,
-        type: tipo
-      };
-      
-      systemLogs.unshift(log);
-      if (systemLogs.length > 100) {
-        systemLogs.pop();
-      }
-      
-      localStorage.setItem('system_logs', JSON.stringify(systemLogs));
-      atualizarLogs();
-    }
-
-    function atualizarLogs() {
-      const logList = document.getElementById('logList');
-      if (!logList) return;
-
-      logList.innerHTML = '';
-      
-      systemLogs.forEach(log => {
-        const logItem = document.createElement('div');
-        logItem.className = 'log-item';
-        logItem.innerHTML = `
-          <div class="log-time">${log.timestamp}</div>
-          <div class="log-message">${log.message}</div>
-          <div class="log-type ${log.type === 'success' ? 'log-success' : log.type === 'error' ? 'log-error' : 'log-info'}">
-            ${log.type.toUpperCase()}
-          </div>
-        `;
-        logList.appendChild(logItem);
-      });
-
-      // Atualizar estatísticas
-      document.getElementById('totalLogs').textContent = systemLogs.length;
-      document.getElementById('sucessosLogs').textContent = systemLogs.filter(log => log.type === 'success').length;
-      document.getElementById('errosLogs').textContent = systemLogs.filter(log => log.type === 'error').length;
-      document.getElementById('ultimaAtividade').textContent = systemLogs.length > 0 ? systemLogs[0].timestamp : '-';
-    }
-
-    function filtrarLogs(tipo) {
-      // Implementação simplificada - em produção seria mais complexa
-      alert(`Filtrando logs por: ${tipo}`);
-    }
-
-    function limparLogs() {
-      if (confirm('Tem certeza que deseja limpar todos os logs?')) {
-        systemLogs = [];
-        localStorage.setItem('system_logs', JSON.stringify(systemLogs));
-        atualizarLogs();
-        adicionarLog('Todos os logs foram limpos', 'info');
-      }
-    }
-
-    function exportarLogsCSV() {
-      adicionarLog('Exportação de logs em CSV solicitada', 'info');
-      alert('Logs exportados em CSV com sucesso!');
-    }
-
-    function exportarLogsJSON() {
-      const dataStr = JSON.stringify(systemLogs, null, 2);
-      const dataBlob = new Blob([dataStr], {type: 'application/json'});
-      
-      // Simulação de download
-      adicionarLog('Exportação de logs em JSON realizada', 'success');
-      alert('Logs exportados em JSON com sucesso!');
-    }
-
-    // CONFIGURAÇÕES
-    function toggleConfig(element, configName) {
-      element.classList.toggle('on');
-      adicionarLog(`Configuração ${configName} alterada`, 'info');
-    }
-
-    function salvarConfigRede() {
-      const ipInput = document.getElementById('configArduinoIP');
-      const ip = ipInput.value.trim();
-      
-      if (ip) {
-        arduinoIP = ip;
-        localStorage.setItem('arduino_ip', ip);
-        adicionarLog('Configurações de rede salvas', 'success');
-        alert('Configurações de rede salvas com sucesso!');
-      }
-    }
-
-    function fazerBackup() {
-      adicionarLog('Backup do sistema solicitado', 'info');
-      alert('Backup realizado com sucesso!');
-    }
-
-    function restaurarBackup() {
-      adicionarLog('Restauração de backup solicitada', 'info');
-      alert('Backup restaurado com sucesso!');
-    }
-
-    function reiniciarSistema() {
-      if (confirm('Tem certeza que deseja reiniciar o sistema?')) {
-        adicionarLog('Reinício do sistema solicitado', 'info');
-        alert('Sistema reiniciado!');
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      }
-    }
-
-    function resetarConfiguracoes() {
-      if (confirm('Tem certeza que deseja resetar todas as configurações?')) {
-        localStorage.clear();
-        adicionarLog('Todas as configurações foram resetadas', 'info');
-        alert('Configurações resetadas! A página será recarregada.');
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      }
-    }
-
-    function abrirDocumentacao() {
-      adicionarLog('Acesso à documentação solicitado', 'info');
-      alert('Redirecionando para a documentação...');
-    }
-
-    function reportarProblema() {
-      adicionarLog('Reporte de problema solicitado', 'info');
-      alert('Abrindo formulário de reporte...');
-    }
-
-    function atualizarInfoSistema() {
-      const uptime = Math.floor((new Date() - systemStartTime) / 1000);
-      const hours = Math.floor(uptime / 3600);
-      const minutes = Math.floor((uptime % 3600) / 60);
-      
-      document.getElementById('systemUptime').textContent = `${hours}h ${minutes}m`;
-      document.getElementById('statusConexao').textContent = arduinoIP ? 'Conectado' : 'Desconectado';
-      document.getElementById('configArduinoIP').value = arduinoIP;
-    }
-
-    // GRÁFICOS AVANÇADOS
-    function inicializarGraficosAvancados() {
-      // Gráfico por hora
-      const ctxHora = document.getElementById('chartHora');
-      if (ctxHora) {
-        new Chart(ctxHora, {
-          type: 'bar',
-          data: {
-            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-            datasets: [{
-              label: 'Consumo (W)',
-              data: [50, 30, 120, 180, 220, 150],
-              backgroundColor: '#1976d2',
-              borderColor: '#1976d2',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: { beginAtZero: true }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const lampadas = document.querySelectorAll('.lampada');
+            const ipInput = document.getElementById('ip');
+            const connectBtn = document.getElementById('connectBtn');
+            const connectionStatus = document.getElementById('connectionStatus');
+            const message = document.getElementById('message');
+            
+            // Estado inicial das lâmpadas (todas desligadas)
+            const estados = {
+                1: false,
+                2: false,
+                3: false,
+                4: false
+            };
+            
+            let isConnected = false;
+            let statusInterval = null;
+            
+            // Função para atualizar a interface
+            function atualizarInterface(lampadaNumero, estado) {
+                const lampada = document.querySelector(`.lampada[data-lamp="${lampadaNumero}"]`);
+                const status = lampada.querySelector('.status');
+                
+                if (estado) {
+                    lampada.classList.remove('off');
+                    lampada.classList.add('on');
+                    status.textContent = 'LIGADA';
+                    status.classList.remove('off');
+                    status.classList.add('on');
+                } else {
+                    lampada.classList.remove('on');
+                    lampada.classList.add('off');
+                    status.textContent = 'DESLIGADA';
+                    status.classList.remove('on');
+                    status.classList.add('off');
+                }
             }
-          }
-        });
-      }
-
-      // Gráfico de distribuição
-      const ctxDist = document.getElementById('chartDistribuicao');
-      if (ctxDist) {
-        new Chart(ctxDist, {
-          type: 'doughnut',
-          data: {
-            labels: ['Lâmpada 1', 'Lâmpada 2', 'Lâmpada 3', 'Lâmpada 4'],
-            datasets: [{
-              data: [25, 35, 20, 20],
-              backgroundColor: ['#1976d2', '#2e7d32', '#c62828', '#ff9800']
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false
-          }
-        });
-      }
-
-      // Gráfico mensal
-      const ctxMensal = document.getElementById('chartMensal');
-      if (ctxMensal) {
-        new Chart(ctxMensal, {
-          type: 'line',
-          data: {
-            labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-            datasets: [{
-              label: 'Consumo (kWh)',
-              data: [85, 78, 92, 65, 70, 88, 95, 82, 76, 90, 85, 80],
-              borderColor: '#1976d2',
-              backgroundColor: 'rgba(25, 118, 210, 0.1)',
-              borderWidth: 2,
-              tension: 0.4,
-              fill: true
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false
-          }
-        });
-      }
-    }
-
-    // ===== INICIALIZAÇÃO =====
-    document.addEventListener('DOMContentLoaded', function() {
-      // Carrega IP salvo
-      if (arduinoIP) {
-        document.getElementById('arduinoIP').value = arduinoIP;
-      }
-      
-      // Inicializa gráfico principal
-      const ctx = document.getElementById('chart');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
-          datasets: [{
-            label: 'Consumo (W)',
-            data: [12, 19, 8, 17, 14, 12, 7],
-            borderColor: '#1976d2',
-            backgroundColor: 'rgba(25, 118, 210, 0.1)',
-            borderWidth: 2,
-            tension: 0.4,
-            fill: true
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top'
+            
+            // Função para enviar comando ao Arduino
+            function enviarComando(lampadaNumero, estado) {
+                if (!isConnected) {
+                    showMessage('Não conectado ao Arduino. Verifique o IP e tente conectar novamente.', 'error');
+                    return;
+                }
+                
+                const ip = ipInput.value.trim();
+                
+                if (!ip) {
+                    showMessage('Por favor, insira o IP do Arduino', 'error');
+                    return;
+                }
+                
+                // Adicionar classe de loading
+                const lampada = document.querySelector(`.lampada[data-lamp="${lampadaNumero}"]`);
+                lampada.classList.add('loading');
+                
+                // Fazer requisição REAL para o Arduino
+                fetch(`http://${ip}/control?lamp${lampadaNumero}&state=${estado ? 'on' : 'off'}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Erro na resposta do servidor');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            estados[lampadaNumero] = estado;
+                            atualizarInterface(lampadaNumero, estado);
+                            showMessage(data.message, 'success');
+                        } else {
+                            throw new Error(data.message || 'Erro desconhecido');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        showMessage('Erro de conexão: ' + error.message, 'error');
+                        // Reverter o estado visual
+                        atualizarInterface(lampadaNumero, estados[lampadaNumero]);
+                    })
+                    .finally(() => {
+                        // Remover classe de loading
+                        lampada.classList.remove('loading');
+                    });
             }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: 'Watts (W)'
-              }
-            },
-            x: {
-              title: {
-                display: true,
-                text: 'Dias da Semana'
-              }
+            
+            // Função para verificar status do Arduino
+            function verificarStatus() {
+                if (!isConnected) return;
+                
+                const ip = ipInput.value.trim();
+                
+                if (!ip) return;
+                
+                fetch(`http://${ip}/status`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Erro na resposta do servidor');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        for (let i = 1; i <= 4; i++) {
+                            if (data[`lamp${i}`] !== undefined) {
+                                estados[i] = data[`lamp${i}`];
+                                atualizarInterface(i, data[`lamp${i}`]);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao atualizar status:', error);
+                        // Se houver erro na atualização de status, considerar desconectado
+                        if (isConnected) {
+                            setConnectionStatus(false, 'Erro na conexão com Arduino');
+                        }
+                    });
             }
-          }
-        }
-      });
-
-      // Adiciona log inicial
-      adicionarLog('Sistema inicializado com sucesso', 'success');
-    });
-  </script>
+            
+            // Função para conectar/desconectar
+            function toggleConnection() {
+                if (isConnected) {
+                    // Desconectar
+                    setConnectionStatus(false, 'Desconectado');
+                    if (statusInterval) {
+                        clearInterval(statusInterval);
+                        statusInterval = null;
+                    }
+                } else {
+                    // Conectar
+                    const ip = ipInput.value.trim();
+                    
+                    if (!ip) {
+                        showMessage('Por favor, insira o IP do Arduino', 'error');
+                        return;
+                    }
+                    
+                    connectBtn.disabled = true;
+                    connectBtn.textContent = 'Conectando...';
+                    
+                    // Testar conexão com o Arduino
+                    fetch(`http://${ip}/status`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Erro na resposta do servidor');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            setConnectionStatus(true, 'Conectado ao Arduino');
+                            
+                            // Atualizar estados iniciais
+                            for (let i = 1; i <= 4; i++) {
+                                if (data[`lamp${i}`] !== undefined) {
+                                    estados[i] = data[`lamp${i}`];
+                                    atualizarInterface(i, data[`lamp${i}`]);
+                                }
+                            }
+                            
+                            // Iniciar atualização periódica de status
+                            statusInterval = setInterval(verificarStatus, 2000);
+                        })
+                        .catch(error => {
+                            console.error('Erro de conexão:', error);
+                            setConnectionStatus(false, 'Falha na conexão: ' + error.message);
+                        })
+                        .finally(() => {
+                            connectBtn.disabled = false;
+                            connectBtn.textContent = 'Conectar';
+                        });
+                }
+            }
+            
+            // Função para definir status da conexão
+            function setConnectionStatus(connected, message) {
+                isConnected = connected;
+                connectBtn.textContent = connected ? 'Desconectar' : 'Conectar';
+                
+                if (connected) {
+                    connectionStatus.textContent = message;
+                    connectionStatus.className = 'connection-status connected';
+                } else {
+                    connectionStatus.textContent = message;
+                    connectionStatus.className = 'connection-status disconnected';
+                }
+            }
+            
+            // Função para mostrar mensagens
+            function showMessage(text, type) {
+                message.textContent = text;
+                message.className = 'message ' + type;
+                
+                setTimeout(() => {
+                    message.className = 'message';
+                }, 3000);
+            }
+            
+            // Adicionar eventos de clique às lâmpadas
+            lampadas.forEach(lampada => {
+                lampada.addEventListener('click', function() {
+                    if (!isConnected) {
+                        showMessage('Conecte-se ao Arduino primeiro', 'error');
+                        return;
+                    }
+                    
+                    const lampadaNumero = parseInt(this.getAttribute('data-lamp'));
+                    const novoEstado = !estados[lampadaNumero];
+                    
+                    enviarComando(lampadaNumero, novoEstado);
+                });
+            });
+            
+            // Evento para o botão de conectar
+            connectBtn.addEventListener('click', toggleConnection);
+            
+            // Permitir conectar pressionando Enter no campo IP
+            ipInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    toggleConnection();
+                }
+            });
+            
+            // Inicializar a interface
+            for (let i = 1; i <= 4; i++) {
+                atualizarInterface(i, estados[i]);
+            }
+        });
+    </script>
 </body>
   </html>
