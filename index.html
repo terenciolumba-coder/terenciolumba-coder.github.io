@@ -5,176 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Lâmpadas</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f5f5f5;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-            width: 100%;
-            max-width: 500px;
-        }
-        
-        h1 {
-            text-align: center;
-            margin-bottom: 25px;
-            color: #333;
-        }
-        
-        .ip-config {
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #555;
-        }
-        
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        
-        .connect-btn {
-            margin-top: 10px;
-            padding: 10px 15px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .connect-btn:hover {
-            background-color: #45a049;
-        }
-        
-        .connect-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        
-        .connection-status {
-            margin-top: 10px;
-            padding: 8px;
-            border-radius: 5px;
-            text-align: center;
-            font-size: 14px;
-            display: none;
-        }
-        
-        .connection-status.connected {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            display: block;
-        }
-        
-        .connection-status.disconnected {
-            background-color: #ffebee;
-            color: #c62828;
-            display: block;
-        }
-        
-        .lampadas {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        
-        .lampada {
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid #e0e0e0;
-        }
-        
-        .lampada:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .lampada h3 {
-            margin-bottom: 10px;
-            color: #333;
-        }
-        
-        .lampada.off {
-            background-color: #ffebee;
-        }
-        
-        .lampada.on {
-            background-color: #e8f5e9;
-        }
-        
-        .status {
-            font-weight: bold;
-            font-size: 14px;
-            padding: 5px 10px;
-            border-radius: 20px;
-            display: inline-block;
-        }
-        
-        .status.off {
-            background-color: #f44336;
-            color: white;
-        }
-        
-        .status.on {
-            background-color: #4caf50;
-            color: white;
-        }
-        
-        .message {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-            font-size: 14px;
-            display: none;
-        }
-        
-        .message.success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            display: block;
-        }
-        
-        .message.error {
-            background-color: #ffebee;
-            color: #c62828;
-            display: block;
-        }
-        
-        .loading {
-            opacity: 0.7;
-            pointer-events: none;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color:#f5f5f5; padding:20px; display:flex; justify-content:center; align-items:center; min-height:100vh; }
+        .container { background-color:white; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.1); padding:25px; width:100%; max-width:500px; }
+        h1 { text-align:center; margin-bottom:25px; color:#333; }
+        .ip-config { margin-bottom:25px; padding-bottom:15px; border-bottom:1px solid #eee; }
+        label { display:block; margin-bottom:8px; font-weight:500; color:#555; }
+        input[type="text"] { width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:16px; }
+        .connect-btn, .all-btn { margin-top:10px; padding:10px 15px; background-color:#4CAF50; color:white; border:none; border-radius:5px; cursor:pointer; font-size:14px; }
+        .connect-btn:hover, .all-btn:hover { background-color:#45a049; }
+        .connect-btn:disabled { background-color:#cccccc; cursor:not-allowed; }
+        .connection-status { margin-top:10px; padding:8px; border-radius:5px; text-align:center; font-size:14px; display:none; }
+        .connection-status.connected { background-color:#e8f5e9; color:#2e7d32; display:block; }
+        .connection-status.disconnected { background-color:#ffebee; color:#c62828; display:block; }
+        .lampadas { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px; }
+        .lampada { background-color:#f9f9f9; border-radius:8px; padding:15px; text-align:center; cursor:pointer; transition:all 0.3s ease; border:1px solid #e0e0e0; }
+        .lampada:hover { transform:translateY(-3px); box-shadow:0 5px 10px rgba(0,0,0,0.1); }
+        .lampada h3 { margin-bottom:10px; color:#333; }
+        .lampada.off { background-color:#ffebee; }
+        .lampada.on { background-color:#e8f5e9; }
+        .status { font-weight:bold; font-size:14px; padding:5px 10px; border-radius:20px; display:inline-block; }
+        .status.off { background-color:#f44336; color:white; }
+        .status.on { background-color:#4caf50; color:white; }
+        .message { margin-top:20px; padding:10px; border-radius:5px; text-align:center; font-size:14px; display:none; }
+        .message.success { background-color:#e8f5e9; color:#2e7d32; display:block; }
+        .message.error { background-color:#ffebee; color:#c62828; display:block; }
+        .loading { opacity:0.7; pointer-events:none; }
+        .all-btn { width:48%; display:inline-block; margin-right:2%; }
+        .all-btn:last-child { margin-right:0; }
     </style>
 </head>
 <body>
@@ -183,262 +41,119 @@
         
         <div class="ip-config">
             <label for="ip">IP do Arduino:</label>
-            <input type="text" id="ip" placeholder="Ex: 192.168.1.177">
+            <input type="text" id="ip" placeholder="Ex: 192.168.1.50">
             <button class="connect-btn" id="connectBtn">Conectar</button>
             <div class="connection-status" id="connectionStatus"></div>
         </div>
-        
+
         <div class="lampadas">
-            <div class="lampada off" data-lamp="1">
-                <h3>Lâmpada 1</h3>
-                <div class="status off">DESLIGADA</div>
-            </div>
-            
-            <div class="lampada off" data-lamp="2">
-                <h3>Lâmpada 2</h3>
-                <div class="status off">DESLIGADA</div>
-            </div>
-            
-            <div class="lampada off" data-lamp="3">
-                <h3>Lâmpada 3</h3>
-                <div class="status off">DESLIGADA</div>
-            </div>
-            
-            <div class="lampada off" data-lamp="4">
-                <h3>Lâmpada 4</h3>
-                <div class="status off">DESLIGADA</div>
-            </div>
+            <div class="lampada off" data-lamp="1"><h3>Lâmpada 1</h3><div class="status off">DESLIGADA</div></div>
+            <div class="lampada off" data-lamp="2"><h3>Lâmpada 2</h3><div class="status off">DESLIGADA</div></div>
+            <div class="lampada off" data-lamp="3"><h3>Lâmpada 3</h3><div class="status off">DESLIGADA</div></div>
+            <div class="lampada off" data-lamp="4"><h3>Lâmpada 4</h3><div class="status off">DESLIGADA</div></div>
         </div>
-        
+
+        <div style="margin-bottom:15px;">
+            <button class="all-btn" id="turnAllOn">Ligar Todas</button>
+            <button class="all-btn" id="turnAllOff">Desligar Todas</button>
+        </div>
+
         <div class="message" id="message"></div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const lampadas = document.querySelectorAll('.lampada');
-            const ipInput = document.getElementById('ip');
-            const connectBtn = document.getElementById('connectBtn');
-            const connectionStatus = document.getElementById('connectionStatus');
-            const message = document.getElementById('message');
-            
-            // Estado inicial das lâmpadas (todas desligadas)
-            const estados = {
-                1: false,
-                2: false,
-                3: false,
-                4: false
-            };
-            
-            let isConnected = false;
-            let statusInterval = null;
-            
-            // Função para atualizar a interface
-            function atualizarInterface(lampadaNumero, estado) {
-                const lampada = document.querySelector(`.lampada[data-lamp="${lampadaNumero}"]`);
-                const status = lampada.querySelector('.status');
-                
-                if (estado) {
-                    lampada.classList.remove('off');
-                    lampada.classList.add('on');
-                    status.textContent = 'LIGADA';
-                    status.classList.remove('off');
-                    status.classList.add('on');
-                } else {
-                    lampada.classList.remove('on');
-                    lampada.classList.add('off');
-                    status.textContent = 'DESLIGADA';
-                    status.classList.remove('on');
-                    status.classList.add('off');
-                }
+    document.addEventListener('DOMContentLoaded', function() {
+        const lampadas = document.querySelectorAll('.lampada');
+        const ipInput = document.getElementById('ip');
+        const connectBtn = document.getElementById('connectBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const message = document.getElementById('message');
+        const turnAllOnBtn = document.getElementById('turnAllOn');
+        const turnAllOffBtn = document.getElementById('turnAllOff');
+
+        const estados = {1:false,2:false,3:false,4:false};
+        let isConnected = false;
+        let statusInterval = null;
+
+        function atualizarInterface(lampadaNumero, estado) {
+            const lampada = document.querySelector(`.lampada[data-lamp="${lampadaNumero}"]`);
+            const status = lampada.querySelector('.status');
+            if(estado){
+                lampada.classList.remove('off'); lampada.classList.add('on');
+                status.textContent = 'LIGADA'; status.classList.remove('off'); status.classList.add('on');
+            } else {
+                lampada.classList.remove('on'); lampada.classList.add('off');
+                status.textContent = 'DESLIGADA'; status.classList.remove('on'); status.classList.add('off');
             }
-            
-            // Função para enviar comando ao Arduino
-            function enviarComando(lampadaNumero, estado) {
-                if (!isConnected) {
-                    showMessage('Não conectado ao Arduino. Verifique o IP e tente conectar novamente.', 'error');
-                    return;
-                }
-                
+        }
+
+        function enviarComando(lampadaNumero, estado){
+            if(!isConnected){ showMessage('Não conectado ao Arduino.', 'error'); return; }
+            const ip = ipInput.value.trim();
+            if(!ip){ showMessage('Insira o IP do Arduino', 'error'); return; }
+            const lampada = document.querySelector(`.lampada[data-lamp="${lampadaNumero}"]`);
+            lampada.classList.add('loading');
+
+            fetch(`http://${ip}/${lampadaNumero}/${estado?'on':'off'}`)
+            .then(r=>r.json())
+            .then(data=>{
+                estados[lampadaNumero] = estado;
+                atualizarInterface(lampadaNumero, estado);
+            })
+            .catch(e=>{ console.error(e); showMessage('Erro de conexão', 'error'); atualizarInterface(lampadaNumero, estados[lampadaNumero]); })
+            .finally(()=>{ lampada.classList.remove('loading'); });
+        }
+
+        function toggleConnection(){
+            if(isConnected){
+                setConnectionStatus(false,'Desconectado');
+                if(statusInterval){ clearInterval(statusInterval); statusInterval=null; }
+            } else {
                 const ip = ipInput.value.trim();
-                
-                if (!ip) {
-                    showMessage('Por favor, insira o IP do Arduino', 'error');
-                    return;
-                }
-                
-                // Adicionar classe de loading
-                const lampada = document.querySelector(`.lampada[data-lamp="${lampadaNumero}"]`);
-                lampada.classList.add('loading');
-                
-                // Fazer requisição REAL para o Arduino
-                fetch(`http://${ip}/control?lamp${lampadaNumero}&state=${estado ? 'on' : 'off'}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Erro na resposta do servidor');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            estados[lampadaNumero] = estado;
-                            atualizarInterface(lampadaNumero, estado);
-                            showMessage(data.message, 'success');
-                        } else {
-                            throw new Error(data.message || 'Erro desconhecido');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro:', error);
-                        showMessage('Erro de conexão: ' + error.message, 'error');
-                        // Reverter o estado visual
-                        atualizarInterface(lampadaNumero, estados[lampadaNumero]);
-                    })
-                    .finally(() => {
-                        // Remover classe de loading
-                        lampada.classList.remove('loading');
-                    });
+                if(!ip){ showMessage('Insira o IP do Arduino', 'error'); return; }
+                connectBtn.disabled = true; connectBtn.textContent='Conectando...';
+                fetch(`http://${ip}/status`).then(r=>r.json())
+                .then(data=>{
+                    setConnectionStatus(true,'Conectado');
+                    for(let i=1;i<=4;i++){ if(data[`lamp${i}`]!==undefined){ estados[i]=data[`lamp${i}`]; atualizarInterface(i,data[`lamp${i}`]); } }
+                    statusInterval = setInterval(verificarStatus,2000);
+                })
+                .catch(e=>{ console.error(e); setConnectionStatus(false,'Falha na conexão'); })
+                .finally(()=>{ connectBtn.disabled=false; connectBtn.textContent='Conectar'; });
             }
-            
-            // Função para verificar status do Arduino
-            function verificarStatus() {
-                if (!isConnected) return;
-                
-                const ip = ipInput.value.trim();
-                
-                if (!ip) return;
-                
-                fetch(`http://${ip}/status`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Erro na resposta do servidor');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        for (let i = 1; i <= 4; i++) {
-                            if (data[`lamp${i}`] !== undefined) {
-                                estados[i] = data[`lamp${i}`];
-                                atualizarInterface(i, data[`lamp${i}`]);
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro ao atualizar status:', error);
-                        // Se houver erro na atualização de status, considerar desconectado
-                        if (isConnected) {
-                            setConnectionStatus(false, 'Erro na conexão com Arduino');
-                        }
-                    });
-            }
-            
-            // Função para conectar/desconectar
-            function toggleConnection() {
-                if (isConnected) {
-                    // Desconectar
-                    setConnectionStatus(false, 'Desconectado');
-                    if (statusInterval) {
-                        clearInterval(statusInterval);
-                        statusInterval = null;
-                    }
-                } else {
-                    // Conectar
-                    const ip = ipInput.value.trim();
-                    
-                    if (!ip) {
-                        showMessage('Por favor, insira o IP do Arduino', 'error');
-                        return;
-                    }
-                    
-                    connectBtn.disabled = true;
-                    connectBtn.textContent = 'Conectando...';
-                    
-                    // Testar conexão com o Arduino
-                    fetch(`http://${ip}/status`)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Erro na resposta do servidor');
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            setConnectionStatus(true, 'Conectado ao Arduino');
-                            
-                            // Atualizar estados iniciais
-                            for (let i = 1; i <= 4; i++) {
-                                if (data[`lamp${i}`] !== undefined) {
-                                    estados[i] = data[`lamp${i}`];
-                                    atualizarInterface(i, data[`lamp${i}`]);
-                                }
-                            }
-                            
-                            // Iniciar atualização periódica de status
-                            statusInterval = setInterval(verificarStatus, 2000);
-                        })
-                        .catch(error => {
-                            console.error('Erro de conexão:', error);
-                            setConnectionStatus(false, 'Falha na conexão: ' + error.message);
-                        })
-                        .finally(() => {
-                            connectBtn.disabled = false;
-                            connectBtn.textContent = 'Conectar';
-                        });
-                }
-            }
-            
-            // Função para definir status da conexão
-            function setConnectionStatus(connected, message) {
-                isConnected = connected;
-                connectBtn.textContent = connected ? 'Desconectar' : 'Conectar';
-                
-                if (connected) {
-                    connectionStatus.textContent = message;
-                    connectionStatus.className = 'connection-status connected';
-                } else {
-                    connectionStatus.textContent = message;
-                    connectionStatus.className = 'connection-status disconnected';
-                }
-            }
-            
-            // Função para mostrar mensagens
-            function showMessage(text, type) {
-                message.textContent = text;
-                message.className = 'message ' + type;
-                
-                setTimeout(() => {
-                    message.className = 'message';
-                }, 3000);
-            }
-            
-            // Adicionar eventos de clique às lâmpadas
-            lampadas.forEach(lampada => {
-                lampada.addEventListener('click', function() {
-                    if (!isConnected) {
-                        showMessage('Conecte-se ao Arduino primeiro', 'error');
-                        return;
-                    }
-                    
-                    const lampadaNumero = parseInt(this.getAttribute('data-lamp'));
-                    const novoEstado = !estados[lampadaNumero];
-                    
-                    enviarComando(lampadaNumero, novoEstado);
-                });
+        }
+
+        function verificarStatus(){
+            if(!isConnected) return;
+            const ip = ipInput.value.trim();
+            fetch(`http://${ip}/status`).then(r=>r.json())
+            .then(data=>{
+                for(let i=1;i<=4;i++){ if(data[`lamp${i}`]!==undefined){ estados[i]=data[`lamp${i}`]; atualizarInterface(i,data[`lamp${i}`]); } }
+            })
+            .catch(e=>{ console.error(e); setConnectionStatus(false,'Erro na conexão'); });
+        }
+
+        function setConnectionStatus(connected,msg){ isConnected=connected; connectBtn.textContent=connected?'Desconectar':'Conectar'; connectionStatus.textContent=msg; connectionStatus.className='connection-status '+(connected?'connected':'disconnected'); }
+
+        function showMessage(text,type){ message.textContent=text; message.className='message '+type; setTimeout(()=>{ message.className='message'; },3000); }
+
+        lampadas.forEach(lampada=>{
+            lampada.addEventListener('click',function(){
+                if(!isConnected){ showMessage('Conecte-se ao Arduino', 'error'); return; }
+                const lampadaNumero = parseInt(this.getAttribute('data-lamp'));
+                enviarComando(lampadaNumero,!estados[lampadaNumero]);
             });
-            
-            // Evento para o botão de conectar
-            connectBtn.addEventListener('click', toggleConnection);
-            
-            // Permitir conectar pressionando Enter no campo IP
-            ipInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    toggleConnection();
-                }
-            });
-            
-            // Inicializar a interface
-            for (let i = 1; i <= 4; i++) {
-                atualizarInterface(i, estados[i]);
-            }
         });
+
+        connectBtn.addEventListener('click', toggleConnection);
+        ipInput.addEventListener('keypress',e=>{ if(e.key==='Enter') toggleConnection(); });
+
+        // Botões Ligar Todas / Desligar Todas
+        turnAllOnBtn.addEventListener('click', ()=>{ for(let i=1;i<=4;i++) enviarComando(i,true); });
+        turnAllOffBtn.addEventListener('click', ()=>{ for(let i=1;i<=4;i++) enviarComando(i,false); });
+
+        for(let i=1;i<=4;i++) atualizarInterface(i,estados[i]);
+    });
     </script>
 </body>
-  </html>
+            </html>
