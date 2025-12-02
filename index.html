@@ -62,98 +62,151 @@
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const lampadas = document.querySelectorAll('.lampada');
-        const ipInput = document.getElementById('ip');
-        const connectBtn = document.getElementById('connectBtn');
-        const connectionStatus = document.getElementById('connectionStatus');
-        const message = document.getElementById('message');
-        const turnAllOnBtn = document.getElementById('turnAllOn');
-        const turnAllOffBtn = document.getElementById('turnAllOff');
+    
+  // ===== VARIÁVEIS GLOBAIS =====
+  let arduinoIP = localStorage.getItem('arduino_ip') || '';
+  let lampadasEstado = [false, false, false, false];
+  let systemLogs = JSON.parse(localStorage.getItem('system_logs') || '[]');
 
-        const estados = {1:false,2:false,3:false,4:false};
-        let isConnected = false;
-        let statusInterval = null;
+  // ===== NAVEGAÇÃO =====
+  function showSection(sectionId) {
+    document.querySelectorAll('.section').forEach(section => section.style.display = 'none');
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
 
-        function atualizarInterface(lampadaNumero, estado) {
-            const lampada = document.querySelector(`.lampada[data-lamp="${lampadaNumero}"]`);
-            const status = lampada.querySelector('.status');
-            if(estado){
-                lampada.classList.remove('off'); lampada.classList.add('on');
-                status.textContent = 'LIGADA'; status.classList.remove('off'); status.classList.add('on');
-            } else {
-                lampada.classList.remove('on'); lampada.classList.add('off');
-                status.textContent = 'DESLIGADA'; status.classList.remove('on'); status.classList.add('off');
-            }
+    document.getElementById(sectionId).style.display = 'block';
+    event.target.classList.add('active');
+
+    if (sectionId === 'logs') atualizarLogs();
+  }
+
+  // ===== TOGGLE & CONTROLE =====
+  function toggleSwitch(element, lampadaId) {
+    const index = lampadaId - 1;
+    const novoEstado = !lampadasEstado[index];
+
+    lampadasEstado[index] = novoEstado;
+    element.classList.toggle("on", novoEstado);
+
+    const card = element.closest('.card');
+    const status = card.querySelector('.status');
+    status.textContent = novoEstado ? "ON" : "OFF";
+    status.className = `status ${novoEstado ? "on" : "off"}`;
+
+    controlarLampada(lampadaId, novoEstado);
+  }
+
+  function controlarLampada(lampadaId, ligar) {
+    if (!arduinoIP) {
+      alert('Configure primeiro o IP do Arduino!');
+      return;
+    }
+
+    const comando = ligar ? 'on' : 'off';
+    const endpoint = `/lamp${lampadaId}=${comando}`;
+
+    adicionarLog(`Enviando comando: Lâmpada ${lampadaId} ${comando.toUpperCase()}`, 'info');
+
+    fetch(`http://${arduinoIP}${endpoint}`)
+      .then(response => {
+        if (response.ok) {
+          lampadasEstado[lampadaId - 1] = ligar;
+          adicionarLog(`Lâmpada ${lampadaId} ${comando.toUpperCase()} com sucesso`, 'success');
+        } else {
+          adicionarLog(`Erro ao controlar Lâmpada ${lampadaId}`, 'error');
+          reverterEstado(lampadaId);
         }
+      })
+      .catch(error => {
+        adicionarLog(`Falha na conexão com Arduino: ${error.message}`, 'error');
+        alert('Erro ao conectar com o Arduino. Verifique o IP e a conexão.');
+        reverterEstado(lampadaId);
+      });
+  }
 
-        function enviarComando(lampadaNumero, estado){
-            if(!isConnected){ showMessage('Não conectado ao Arduino.', 'error'); return; }
-            const ip = ipInput.value.trim();
-            if(!ip){ showMessage('Insira o IP do Arduino', 'error'); return; }
-            const lampada = document.querySelector(`.lampada[data-lamp="${lampadaNumero}"]`);
-            lampada.classList.add('loading');
+  function reverterEstado(lampadaId) {
+    const index = lampadaId - 1;
+    lampadasEstado[index] = !lampadasEstado[index];
 
-            fetch(`http://${ip}/${lampadaNumero}/${estado?'on':'off'}`)
-            .then(r=>r.json())
-            .then(data=>{
-                estados[lampadaNumero] = estado;
-                atualizarInterface(lampadaNumero, estado);
-            })
-            .catch(e=>{ console.error(e); showMessage('Erro de conexão', 'error'); atualizarInterface(lampadaNumero, estados[lampadaNumero]); })
-            .finally(()=>{ lampada.classList.remove('loading'); });
-        }
+    const card = document.querySelectorAll('.card')[index];
+    const toggle = card.querySelector('.toggle');
+    const status = card.querySelector('.status');
 
-        function toggleConnection(){
-            if(isConnected){
-                setConnectionStatus(false,'Desconectado');
-                if(statusInterval){ clearInterval(statusInterval); statusInterval=null; }
-            } else {
-                const ip = ipInput.value.trim();
-                if(!ip){ showMessage('Insira o IP do Arduino', 'error'); return; }
-                connectBtn.disabled = true; connectBtn.textContent='Conectando...';
-                fetch(`http://${ip}/status`).then(r=>r.json())
-                .then(data=>{
-                    setConnectionStatus(true,'Conectado');
-                    for(let i=1;i<=4;i++){ if(data[`lamp${i}`]!==undefined){ estados[i]=data[`lamp${i}`]; atualizarInterface(i,data[`lamp${i}`]); } }
-                    statusInterval = setInterval(verificarStatus,2000);
-                })
-                .catch(e=>{ console.error(e); setConnectionStatus(false,'Falha na conexão'); })
-                .finally(()=>{ connectBtn.disabled=false; connectBtn.textContent='Conectar'; });
-            }
-        }
+    toggle.classList.toggle('on', lampadasEstado[index]);
+    status.textContent = lampadasEstado[index] ? "ON" : "OFF";
+    status.className = `status ${lampadasEstado[index] ? "on" : "off"}`;
+  }
 
-        function verificarStatus(){
-            if(!isConnected) return;
-            const ip = ipInput.value.trim();
-            fetch(`http://${ip}/status`).then(r=>r.json())
-            .then(data=>{
-                for(let i=1;i<=4;i++){ if(data[`lamp${i}`]!==undefined){ estados[i]=data[`lamp${i}`]; atualizarInterface(i,data[`lamp${i}`]); } }
-            })
-            .catch(e=>{ console.error(e); setConnectionStatus(false,'Erro na conexão'); });
-        }
+  // ===== IP DO ARDUINO =====
+  function salvarIP() {
+    const ipInput = document.getElementById('arduinoIP');
+    const ip = ipInput.value.trim();
 
-        function setConnectionStatus(connected,msg){ isConnected=connected; connectBtn.textContent=connected?'Desconectar':'Conectar'; connectionStatus.textContent=msg; connectionStatus.className='connection-status '+(connected?'connected':'disconnected'); }
+    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    if (!ip || !ipRegex.test(ip)) {
+      alert('Por favor, insira um IP válido (ex: 192.168.1.77)');
+      return;
+    }
 
-        function showMessage(text,type){ message.textContent=text; message.className='message '+type; setTimeout(()=>{ message.className='message'; },3000); }
+    arduinoIP = ip;
+    localStorage.setItem('arduino_ip', ip);
+    adicionarLog(`IP do Arduino atualizado para: ${ip}`, 'success');
+    alert(`IP do Arduino salvo: ${ip}`);
+  }
 
-        lampadas.forEach(lampada=>{
-            lampada.addEventListener('click',function(){
-                if(!isConnected){ showMessage('Conecte-se ao Arduino', 'error'); return; }
-                const lampadaNumero = parseInt(this.getAttribute('data-lamp'));
-                enviarComando(lampadaNumero,!estados[lampadaNumero]);
-            });
-        });
+  // ===== FUNÇÕES DE LOG =====
+  function adicionarLog(mensagem, tipo) {
+    const log = {
+      id: Date.now(),
+      timestamp: new Date().toLocaleString('pt-BR'),
+      message: mensagem,
+      type: tipo
+    };
 
-        connectBtn.addEventListener('click', toggleConnection);
-        ipInput.addEventListener('keypress',e=>{ if(e.key==='Enter') toggleConnection(); });
+    systemLogs.unshift(log);
+    if (systemLogs.length > 100) systemLogs.pop();
 
-        // Botões Ligar Todas / Desligar Todas
-        turnAllOnBtn.addEventListener('click', ()=>{ for(let i=1;i<=4;i++) enviarComando(i,true); });
-        turnAllOffBtn.addEventListener('click', ()=>{ for(let i=1;i<=4;i++) enviarComando(i,false); });
+    localStorage.setItem('system_logs', JSON.stringify(systemLogs));
+    atualizarLogs();
+  }
 
-        for(let i=1;i<=4;i++) atualizarInterface(i,estados[i]);
+  function atualizarLogs() {
+    const logList = document.getElementById('logList');
+    logList.innerHTML = '';
+    systemLogs.forEach(log => {
+      const div = document.createElement('div');
+      div.className = `log-item`;
+      div.innerHTML = `
+        <div class="log-time">${log.timestamp}</div>
+        <div class="log-message">${log.message}</div>
+        <div class="log-type ${log.type === 'success' ? 'log-success' : log.type === 'error' ? 'log-error' : 'log-info'}">
+          ${log.type.toUpperCase()}
+        </div>`;
+      logList.appendChild(div);
     });
-    </script>
+
+    document.getElementById('totalLogs').textContent = systemLogs.length;
+    document.getElementById('sucessosLogs').textContent = systemLogs.filter(l => l.type === 'success').length;
+    document.getElementById('errosLogs').textContent = systemLogs.filter(l => l.type === 'error').length;
+    document.getElementById('ultimaAtividade').textContent = systemLogs.length > 0 ? systemLogs[0].timestamp : '-';
+  }
+
+  function limparLogs() {
+    if (confirm('Tem certeza que deseja limpar todos os logs?')) {
+      systemLogs = [];
+      localStorage.setItem('system_logs', JSON.stringify(systemLogs));
+      atualizarLogs();
+      adicionarLog('Todos os logs foram limpos', 'info');
+    }
+  }
+
+  // ===== FUNÇÕES AUXILIARES =====
+  function ligarTodas() { for (let i = 1; i <= 4; i++) controlarLampada(i, true); }
+  function desligarTodas() { for (let i = 1; i <= 4; i++) controlarLampada(i, false); }
+
+  // ===== INICIALIZAÇÃO =====
+  window.addEventListener('load', () => {
+    if (arduinoIP) document.getElementById('arduinoIP').value = arduinoIP;
+  });
+</script>
 </body>
             </html>
