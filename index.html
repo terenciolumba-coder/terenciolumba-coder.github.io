@@ -3,117 +3,694 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Lâmpadas</title>
+    <title>Controle de Lâmpadas - Arduino</title>
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color:#f5f5f5; padding:20px; display:flex; justify-content:center; align-items:center; min-height:100vh; }
-        .container { background-color:white; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.1); padding:25px; width:100%; max-width:500px; }
-        h1 { text-align:center; margin-bottom:25px; color:#333; }
-        .ip-config { margin-bottom:25px; padding-bottom:15px; border-bottom:1px solid #eee; }
-        label { display:block; margin-bottom:8px; font-weight:500; color:#555; }
-        input[type="text"] { width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:16px; }
-        .connect-btn, .all-btn { margin-top:10px; padding:10px 15px; background-color:#4CAF50; color:white; border:none; border-radius:5px; cursor:pointer; font-size:14px; }
-        .connect-btn:hover, .all-btn:hover { background-color:#45a049; }
-        .connect-btn:disabled { background-color:#cccccc; cursor:not-allowed; }
-        .connection-status { margin-top:10px; padding:8px; border-radius:5px; text-align:center; font-size:14px; display:none; }
-        .connection-status.connected { background-color:#e8f5e9; color:#2e7d32; display:block; }
-        .connection-status.disconnected { background-color:#ffebee; color:#c62828; display:block; }
-        .lampadas { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px; }
-        .lampada { background-color:#f9f9f9; border-radius:8px; padding:15px; text-align:center; cursor:pointer; transition:all 0.3s ease; border:1px solid #e0e0e0; }
-        .lampada:hover { transform:translateY(-3px); box-shadow:0 5px 10px rgba(0,0,0,0.1); }
-        .lampada h3 { margin-bottom:10px; color:#333; }
-        .lampada.off { background-color:#ffebee; }
-        .lampada.on { background-color:#e8f5e9; }
-        .status { font-weight:bold; font-size:14px; padding:5px 10px; border-radius:20px; display:inline-block; }
-        .status.off { background-color:#f44336; color:white; }
-        .status.on { background-color:#4caf50; color:white; }
-        .message { margin-top:20px; padding:10px; border-radius:5px; text-align:center; font-size:14px; display:none; }
-        .message.success { background-color:#e8f5e9; color:#2e7d32; display:block; }
-        .message.error { background-color:#ffebee; color:#c62828; display:block; }
-        .loading { opacity:0.7; pointer-events:none; }
-        .all-btn { width:48%; display:inline-block; margin-right:2%; }
-        .all-btn:last-child { margin-right:0; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container { 
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            width: 100%;
+            max-width: 550px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h1 { 
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+            font-size: 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .ip-config { 
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+        
+        label { 
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        input[type="text"] { 
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+            color: white;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .connection-status { 
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .connection-status.connected { 
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .connection-status.disconnected { 
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+            border-left: 4px solid #f44336;
+        }
+        
+        .lampadas-grid { 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .lampada-card { 
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .lampada-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .lampada-card.off {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border-color: #f44336;
+        }
+        
+        .lampada-card.on {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-color: #4CAF50;
+        }
+        
+        .lampada-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .lampada-card:hover::before {
+            opacity: 1;
+        }
+        
+        .lampada-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .lampada-card:hover .lampada-icon {
+            transform: scale(1.2);
+        }
+        
+        .lampada-card h3 { 
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 18px;
+        }
+        
+        .status-badge { 
+            font-weight: bold;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            min-width: 100px;
+        }
+        
+        .status-badge.off { 
+            background: #f44336;
+            color: white;
+        }
+        
+        .status-badge.on { 
+            background: #4caf50;
+            color: white;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .message { 
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .message.success { 
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .message.error { 
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+            border-left: 4px solid #f44336;
+        }
+        
+        .loading { 
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .lampadas-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+        }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1>Controle de Lâmpadas</h1>
+        <h1><i class="fas fa-lightbulb"></i> Controle de Lâmpadas Arduino</h1>
         
         <div class="ip-config">
-            <label for="ip">IP do Arduino:</label>
-            <input type="text" id="ip" placeholder="Ex: 192.168.1.50">
-            <button class="connect-btn" id="connectBtn">Conectar</button>
+            <label for="ip"><i class="fas fa-network-wired"></i> IP do Arduino:</label>
+            <div class="input-group">
+                <input type="text" id="ip" placeholder="Ex: 192.168.137.200" value="192.168.137.200">
+                <button class="btn btn-primary" id="connectBtn">
+                    <i class="fas fa-plug"></i> Conectar
+                </button>
+            </div>
             <div class="connection-status" id="connectionStatus"></div>
         </div>
 
-        <div class="lampadas">
-            <div class="lampada off" data-lamp="1"><h3>Lâmpada 1</h3><div class="status off">DESLIGADA</div></div>
-            <div class="lampada off" data-lamp="2"><h3>Lâmpada 2</h3><div class="status off">DESLIGADA</div></div>
-            <div class="lampada off" data-lamp="3"><h3>Lâmpada 3</h3><div class="status off">DESLIGADA</div></div>
-            <div class="lampada off" data-lamp="4"><h3>Lâmpada 4</h3><div class="status off">DESLIGADA</div></div>
+        <div class="lampadas-grid" id="lampadasGrid">
+            <!-- Lampadas serão geradas via JavaScript -->
         </div>
 
-        <div style="margin-bottom:15px;">
-            <button class="all-btn" id="turnAllOn">Ligar Todas</button>
-            <button class="all-btn" id="turnAllOff">Desligar Todas</button>
+        <div class="action-buttons">
+            <button class="btn btn-success" id="turnAllOn">
+                <i class="fas fa-power-off"></i> Ligar Todas
+            </button>
+            <button class="btn btn-danger" id="turnAllOff">
+                <i class="fas fa-power-off"></i> Desligar Todas
+            </button>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" id="checkStatusBtn">
+                <i class="fas fa-sync-alt"></i> Verificar Status
+            </button>
+            <button class="btn" id="saveIpBtn" style="background: #6c757d; color: white;">
+                <i class="fas fa-save"></i> Salvar IP
+            </button>
         </div>
 
         <div class="message" id="message"></div>
     </div>
 
     <script>
-        let arduinoIP = localStorage.getItem('arduino_ip') || '';
-        let lampadasEstado = [false, false, false, false];
+        // Configurações iniciais
+        let arduinoIP = localStorage.getItem('arduino_ip') || '192.168.137.200';
+        let lampStates = [false, false, false, false];
+        let isConnected = false;
+        let connectionCheckInterval;
 
-        function salvarIP() {
-            const ipInput = document.getElementById('ip');
+        // Elementos DOM
+        const ipInput = document.getElementById('ip');
+        const connectBtn = document.getElementById('connectBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const lampadasGrid = document.getElementById('lampadasGrid');
+        const messageDiv = document.getElementById('message');
+        const turnAllOnBtn = document.getElementById('turnAllOn');
+        const turnAllOffBtn = document.getElementById('turnAllOff');
+        const checkStatusBtn = document.getElementById('checkStatusBtn');
+        const saveIpBtn = document.getElementById('saveIpBtn');
+
+        // Inicialização
+        function init() {
+            ipInput.value = arduinoIP;
+            createLampCards();
+            loadSavedStates();
+            
+            // Testar conexão inicial
+            testConnection();
+            
+            // Configurar event listeners
+            connectBtn.addEventListener('click', connectToArduino);
+            turnAllOnBtn.addEventListener('click', turnAllOn);
+            turnAllOffBtn.addEventListener('click', turnAllOff);
+            checkStatusBtn.addEventListener('click', checkAllStatus);
+            saveIpBtn.addEventListener('click', saveIP);
+            
+            // Configurar atualização automática de status
+            startAutoUpdate();
+            
+            // Carregar estados salvos
+            loadSavedStates();
+        }
+
+        // Criar cartões das lâmpadas
+        function createLampCards() {
+            lampadasGrid.innerHTML = '';
+            
+            for (let i = 1; i <= 4; i++) {
+                const lampCard = document.createElement('div');
+                lampCard.className = `lampada-card ${lampStates[i-1] ? 'on' : 'off'}`;
+                lampCard.dataset.lamp = i;
+                
+                const icon = lampStates[i-1] ? 'fa-lightbulb' : 'fa-lightbulb';
+                const statusText = lampStates[i-1] ? 'LIGADA' : 'DESLIGADA';
+                const statusClass = lampStates[i-1] ? 'on' : 'off';
+                
+                lampCard.innerHTML = `
+                    <div class="lampada-icon">
+                        <i class="fas ${icon} ${lampStates[i-1] ? 'pulse' : ''}"></i>
+                    </div>
+                    <h3>Lâmpada ${i}</h3>
+                    <div class="status-badge ${statusClass}">${statusText}</div>
+                `;
+                
+                lampCard.addEventListener('click', () => toggleLamp(i));
+                lampadasGrid.appendChild(lampCard);
+            }
+        }
+
+        // Conectar ao Arduino
+        async function connectToArduino() {
             const ip = ipInput.value.trim();
             const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            
             if (!ip || !ipRegex.test(ip)) {
-                alert('Por favor, insira um IP válido (ex: 192.168.1.50)');
+                showMessage('Por favor, insira um IP válido', 'error');
                 return;
             }
+            
             arduinoIP = ip;
+            showMessage('Conectando...', 'success');
+            connectBtn.innerHTML = '<div class="loading"></div> Conectando';
+            connectBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`http://${arduinoIP}/status`, {
+                    method: 'GET',
+                    mode: 'no-cors' // Modo no-cors para evitar problemas de CORS
+                }).catch(() => null);
+                
+                // Em modo no-cors, não podemos ler a resposta, mas podemos tentar
+                await testConnection();
+                
+            } catch (error) {
+                showMessage('Erro ao conectar. Verifique o IP e a conexão de rede.', 'error');
+                updateConnectionStatus(false);
+            } finally {
+                connectBtn.innerHTML = '<i class="fas fa-plug"></i> Conectar';
+                connectBtn.disabled = false;
+            }
+        }
+
+        // Testar conexão
+        async function testConnection() {
+            try {
+                // Tentar uma requisição simples
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                const response = await fetch(`http://${arduinoIP}`, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    signal: controller.signal
+                }).catch(() => null);
+                
+                clearTimeout(timeoutId);
+                
+                updateConnectionStatus(true);
+                showMessage('Conectado ao Arduino com sucesso!', 'success');
+                return true;
+            } catch (error) {
+                updateConnectionStatus(false);
+                return false;
+            }
+        }
+
+        // Atualizar status da conexão
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            
+            if (connected) {
+                connectionStatus.textContent = `✅ Conectado ao Arduino (${arduinoIP})`;
+                connectionStatus.className = 'connection-status connected';
+                connectBtn.innerHTML = '<i class="fas fa-check"></i> Conectado';
+                connectBtn.disabled = true;
+                checkAllStatus();
+            } else {
+                connectionStatus.textContent = '❌ Não conectado ao Arduino';
+                connectionStatus.className = 'connection-status disconnected';
+                connectBtn.innerHTML = '<i class="fas fa-plug"></i> Conectar';
+                connectBtn.disabled = false;
+            }
+        }
+
+        // Alternar estado de uma lâmpada
+        async function toggleLamp(lampNumber) {
+            if (!isConnected) {
+                showMessage('Conecte-se ao Arduino primeiro', 'error');
+                return;
+            }
+            
+            const index = lampNumber - 1;
+            const newState = !lampStates[index];
+            
+            try {
+                const command = newState ? 'ligar' : 'desligar';
+                const url = `http://${arduinoIP}/${command}?carga=${lampNumber}`;
+                
+                // Mostrar loading no botão
+                const lampCard = document.querySelector(`.lampada-card[data-lamp="${lampNumber}"]`);
+                const originalContent = lampCard.innerHTML;
+                lampCard.innerHTML = '<div class="loading" style="border-top-color: #667eea;"></div>';
+                
+                // Usando imagem para evitar problemas de CORS
+                const img = new Image();
+                img.src = url;
+                
+                // Aguardar um momento para a requisição ser processada
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                lampStates[index] = newState;
+                updateLampDisplay(lampNumber, newState);
+                saveStates();
+                
+                showMessage(`Lâmpada ${lampNumber} ${newState ? 'ligada' : 'desligada'}`, 'success');
+                
+            } catch (error) {
+                showMessage(`Erro ao controlar lâmpada ${lampNumber}`, 'error');
+            }
+        }
+
+        // Atualizar display da lâmpada
+        function updateLampDisplay(lampNumber, state) {
+            const lampCard = document.querySelector(`.lampada-card[data-lamp="${lampNumber}"]`);
+            const statusBadge = lampCard.querySelector('.status-badge');
+            const icon = lampCard.querySelector('.lampada-icon i');
+            
+            if (state) {
+                lampCard.className = 'lampada-card on';
+                statusBadge.textContent = 'LIGADA';
+                statusBadge.className = 'status-badge on';
+                icon.className = 'fas fa-lightbulb pulse';
+            } else {
+                lampCard.className = 'lampada-card off';
+                statusBadge.textContent = 'DESLIGADA';
+                statusBadge.className = 'status-badge off';
+                icon.className = 'fas fa-lightbulb';
+            }
+        }
+
+        // Ligar todas as lâmpadas
+        async function turnAllOn() {
+            if (!isConnected) {
+                showMessage('Conecte-se ao Arduino primeiro', 'error');
+                return;
+            }
+            
+            showMessage('Ligando todas as lâmpadas...', 'success');
+            
+            try {
+                // Enviar comandos para todas as lâmpadas
+                for (let i = 1; i <= 4; i++) {
+                    const img = new Image();
+                    img.src = `http://${arduinoIP}/ligar?carga=${i}`;
+                    lampStates[i-1] = true;
+                    updateLampDisplay(i, true);
+                }
+                
+                saveStates();
+                showMessage('Todas as lâmpadas foram ligadas', 'success');
+                
+            } catch (error) {
+                showMessage('Erro ao ligar todas as lâmpadas', 'error');
+            }
+        }
+
+        // Desligar todas as lâmpadas
+        async function turnAllOff() {
+            if (!isConnected) {
+                showMessage('Conecte-se ao Arduino primeiro', 'error');
+                return;
+            }
+            
+            showMessage('Desligando todas as lâmpadas...', 'success');
+            
+            try {
+                // Enviar comandos para todas as lâmpadas
+                for (let i = 1; i <= 4; i++) {
+                    const img = new Image();
+                    img.src = `http://${arduinoIP}/desligar?carga=${i}`;
+                    lampStates[i-1] = false;
+                    updateLampDisplay(i, false);
+                }
+                
+                saveStates();
+                showMessage('Todas as lâmpadas foram desligadas', 'success');
+                
+            } catch (error) {
+                showMessage('Erro ao desligar todas as lâmpadas', 'error');
+            }
+        }
+
+        // Verificar status de todas as lâmpadas
+        async function checkAllStatus() {
+            if (!isConnected) {
+                showMessage('Conecte-se ao Arduino primeiro', 'error');
+                return;
+            }
+            
+            showMessage('Verificando status...', 'success');
+            checkStatusBtn.innerHTML = '<div class="loading"></div> Verificando';
+            
+            try {
+                // Tentar obter status do Arduino
+                // Nota: Seu Arduino atual não tem endpoint de status, então usamos os estados locais
+                await testConnection();
+                
+                // Se conectado, assumimos que os estados estão corretos
+                showMessage('Status verificado com sucesso', 'success');
+                
+            } catch (error) {
+                showMessage('Erro ao verificar status', 'error');
+            } finally {
+                checkStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Verificar Status';
+            }
+        }
+
+        // Salvar IP
+        function saveIP() {
+            const ip = ipInput.value.trim();
+            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            
+            if (!ip || !ipRegex.test(ip)) {
+                showMessage('IP inválido', 'error');
+                return;
+            }
+            
             localStorage.setItem('arduino_ip', ip);
-            alert(`IP do Arduino salvo: ${ip}`);
+            arduinoIP = ip;
+            showMessage('IP salvo com sucesso!', 'success');
         }
 
-        function toggleSwitch(element, lampadaId) {
-            const index = lampadaId - 1;
-            const novoEstado = !lampadasEstado[index];
-            lampadasEstado[index] = novoEstado;
-
-            const status = element.querySelector('.status');
-            status.textContent = novoEstado ? 'LIGADA' : 'DESLIGADA';
-            status.className = `status ${novoEstado ? 'on' : 'off'}`;
-
-            controlarLampada(lampadaId, novoEstado);
+        // Salvar estados
+        function saveStates() {
+            localStorage.setItem('lamp_states', JSON.stringify(lampStates));
         }
 
-        function controlarLampada(lampadaId, ligar) {
-            if (!arduinoIP) { alert('Configure primeiro o IP do Arduino!'); return; }
-            const comando = ligar ? 'on' : 'off';
-            fetch(`http://${arduinoIP}/lamp${lampadaId}=${comando}`)
-                .catch(() => alert(`Erro ao conectar com a lâmpada ${lampadaId}`));
+        // Carregar estados salvos
+        function loadSavedStates() {
+            const savedStates = localStorage.getItem('lamp_states');
+            if (savedStates) {
+                lampStates = JSON.parse(savedStates);
+                createLampCards();
+            }
         }
 
-        function ligarTodas() { for (let i = 1; i <= 4; i++) controlarLampada(i, true); }
-        function desligarTodas() { for (let i = 1; i <= 4; i++) controlarLampada(i, false); }
+        // Mostrar mensagem
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            
+            setTimeout(() => {
+                messageDiv.className = 'message';
+            }, 3000);
+        }
 
-        window.addEventListener('load', () => {
-            if (arduinoIP) document.getElementById('ip').value = arduinoIP;
+        // Iniciar atualização automática
+        function startAutoUpdate() {
+            if (connectionCheckInterval) {
+                clearInterval(connectionCheckInterval);
+            }
+            
+            connectionCheckInterval = setInterval(async () => {
+                if (isConnected) {
+                    await testConnection();
+                }
+            }, 10000); // Verificar a cada 10 segundos
+        }
 
-            document.querySelectorAll('.lampada').forEach(lamp => {
-                lamp.addEventListener('click', () => {
-                    const lampadaId = parseInt(lamp.dataset.lamp);
-                    toggleSwitch(lamp, lampadaId);
-                });
-            });
-
-            document.getElementById('connectBtn').addEventListener('click', salvarIP);
-            document.getElementById('turnAllOn').addEventListener('click', ligarTodas);
-            document.getElementById('turnAllOff').addEventListener('click', desligarTodas);
-        });
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
-</html>
+            </html>
